@@ -25,6 +25,7 @@ const Index = () => {
   const [result, setResult] = useState<ProcessingResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showBorder, setShowBorder] = useState(false);
+  const [roundedCorners, setRoundedCorners] = useState(false);
   const [crop, setCrop] = useState<CropRegion>(DEFAULT_CROP);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
 
@@ -41,7 +42,7 @@ const Index = () => {
         setState('processing');
         const pdf = await loadPdf(selectedFile);
         setPdfDoc(pdf);
-        const processed = await processAadhaarPdf(pdf);
+        const processed = await processAadhaarPdf(pdf, DEFAULT_CROP, false);
         setResult(processed);
         setState('preview');
       }
@@ -60,7 +61,7 @@ const Index = () => {
     try {
       const pdf = await loadPdf(file, password);
       setPdfDoc(pdf);
-      const processed = await processAadhaarPdf(pdf);
+      const processed = await processAadhaarPdf(pdf, DEFAULT_CROP, false);
       setResult(processed);
       setState('preview');
     } catch (error: any) {
@@ -74,12 +75,25 @@ const Index = () => {
     }
   }, [file]);
 
+  const handleRoundedToggle = useCallback((enabled: boolean) => {
+    setRoundedCorners(enabled);
+    // Re-crop with new rounded setting
+    if (result?.fullPageCanvas) {
+      const canvas = result.fullPageCanvas;
+      setResult({
+        frontImage: cropFromCanvas(canvas, 'front', crop, enabled),
+        backImage: cropFromCanvas(canvas, 'back', crop, enabled),
+        fullPageCanvas: canvas,
+      });
+    }
+  }, [result, crop]);
+
   const handleDownload = useCallback(() => {
     if (!result) return;
     setIsGenerating(true);
 
     try {
-      const blob = generatePrintPdf(result.frontImage, result.backImage, { showBorder });
+      const blob = generatePrintPdf(result.frontImage, result.backImage, { showBorder, roundedCorners });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -89,7 +103,7 @@ const Index = () => {
     } finally {
       setIsGenerating(false);
     }
-  }, [result, showBorder]);
+  }, [result, showBorder, roundedCorners]);
 
   const handleReset = useCallback(() => {
     setFile(null);
@@ -98,6 +112,8 @@ const Index = () => {
     setPasswordError(null);
     setCrop(DEFAULT_CROP);
     setPdfDoc(null);
+    setRoundedCorners(false);
+    setShowBorder(false);
   }, []);
 
   const handleManualCrop = useCallback(() => {
@@ -108,12 +124,12 @@ const Index = () => {
     if (!result?.fullPageCanvas) return;
     const canvas = result.fullPageCanvas;
     setResult({
-      frontImage: cropFromCanvas(canvas, 'front', crop),
-      backImage: cropFromCanvas(canvas, 'back', crop),
+      frontImage: cropFromCanvas(canvas, 'front', crop, roundedCorners),
+      backImage: cropFromCanvas(canvas, 'back', crop, roundedCorners),
       fullPageCanvas: canvas,
     });
     setState('preview');
-  }, [result, crop]);
+  }, [result, crop, roundedCorners]);
 
   const handleResetCrop = useCallback(() => {
     setCrop(DEFAULT_CROP);
@@ -121,7 +137,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container max-w-2xl mx-auto px-4 py-6 text-center">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
@@ -133,7 +148,6 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Main */}
       <main className="container max-w-2xl mx-auto px-4 py-8 space-y-8">
         <StepsGuide />
 
@@ -175,6 +189,8 @@ const Index = () => {
               isGenerating={isGenerating}
               showBorder={showBorder}
               onBorderToggle={setShowBorder}
+              roundedCorners={roundedCorners}
+              onRoundedToggle={handleRoundedToggle}
               canManualCrop={!!result.fullPageCanvas}
               onManualCrop={handleManualCrop}
             />
