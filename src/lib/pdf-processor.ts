@@ -57,29 +57,31 @@ function cropAadhaarRegion(
   canvas: HTMLCanvasElement,
   side: 'front' | 'back'
 ): string {
-  // Standard Aadhaar PDF layout: page is divided into top (front) and bottom (back)
-  // or it may be two separate pages. We handle both cases.
+  // Standard e-Aadhaar PDF layout (single page, Letter 8.5x11):
+  // The card front and back are side-by-side at the bottom ~28% of the page.
+  // Front card is on the left half, back card is on the right half.
   const cropCanvas = document.createElement('canvas');
   const ctx = cropCanvas.getContext('2d')!;
   
   const w = canvas.width;
   const h = canvas.height;
   
-  // Aadhaar card aspect ratio is roughly 3.37 x 2.13 inches (credit card size)
-  // In the PDF, front is typically top half, back is bottom half
-  const halfH = Math.floor(h / 2);
+  // Card region starts at ~72% from top, ends at ~96% from top
+  const cardTop = Math.floor(h * 0.72);
+  const cardBottom = Math.floor(h * 0.96);
+  const midX = Math.floor(w / 2);
   
-  // Add small margins to avoid edge artifacts
-  const margin = Math.floor(w * 0.02);
-  const cropW = w - margin * 2;
-  const cropH = halfH - margin;
+  // Small margin to trim dashed border lines
+  const margin = Math.floor(w * 0.01);
+  
+  const sx = side === 'front' ? margin : midX;
+  const cropW = midX - margin;
+  const cropH = cardBottom - cardTop;
   
   cropCanvas.width = cropW;
   cropCanvas.height = cropH;
   
-  const sy = side === 'front' ? margin : halfH;
-  
-  ctx.drawImage(canvas, margin, sy, cropW, cropH, 0, 0, cropW, cropH);
+  ctx.drawImage(canvas, sx, cardTop, cropW, cropH, 0, 0, cropW, cropH);
   
   return cropCanvas.toDataURL('image/png', 1.0);
 }
