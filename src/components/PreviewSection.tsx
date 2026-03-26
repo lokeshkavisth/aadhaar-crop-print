@@ -11,6 +11,8 @@ interface PreviewSectionProps {
   isGenerating: boolean;
   showBorder: boolean;
   onBorderToggle: (v: boolean) => void;
+  roundedCorners: boolean;
+  onRoundedToggle: (v: boolean) => void;
   canManualCrop: boolean;
   onManualCrop: () => void;
 }
@@ -23,6 +25,8 @@ export function PreviewSection({
   isGenerating,
   showBorder,
   onBorderToggle,
+  roundedCorners,
+  onRoundedToggle,
   canManualCrop,
   onManualCrop,
 }: PreviewSectionProps) {
@@ -31,35 +35,49 @@ export function PreviewSection({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <p className="text-sm font-medium text-foreground">Front Side</p>
-          <div className="rounded-lg border border-border overflow-hidden bg-card">
+          <div className={`border border-border overflow-hidden bg-card ${roundedCorners ? 'rounded-xl' : 'rounded-sm'}`}>
             <img src={frontImage} alt="Aadhaar Front" className="w-full h-auto" />
           </div>
         </div>
         <div className="space-y-2">
           <p className="text-sm font-medium text-foreground">Back Side</p>
-          <div className="rounded-lg border border-border overflow-hidden bg-card">
+          <div className={`border border-border overflow-hidden bg-card ${roundedCorners ? 'rounded-xl' : 'rounded-sm'}`}>
             <img src={backImage} alt="Aadhaar Back" className="w-full h-auto" />
           </div>
         </div>
       </div>
 
       {/* Options */}
-      <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
-        <div className="flex items-center gap-3">
-          <Switch
-            id="border-toggle"
-            checked={showBorder}
-            onCheckedChange={onBorderToggle}
-          />
-          <Label htmlFor="border-toggle" className="text-sm text-foreground cursor-pointer">
-            Show cut border in PDF
-          </Label>
+      <div className="rounded-lg border border-border bg-card p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Switch
+              id="rounded-toggle"
+              checked={roundedCorners}
+              onCheckedChange={onRoundedToggle}
+            />
+            <Label htmlFor="rounded-toggle" className="text-sm text-foreground cursor-pointer">
+              Rounded corners
+            </Label>
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch
+              id="border-toggle"
+              checked={showBorder}
+              onCheckedChange={onBorderToggle}
+            />
+            <Label htmlFor="border-toggle" className="text-sm text-foreground cursor-pointer">
+              Cut border in PDF
+            </Label>
+          </div>
         </div>
         {canManualCrop && (
-          <Button variant="outline" size="sm" onClick={onManualCrop}>
-            <Crop className="h-4 w-4 mr-2" />
-            Adjust Crop
-          </Button>
+          <div className="pt-2 border-t border-border">
+            <Button variant="outline" size="sm" onClick={onManualCrop} className="w-full sm:w-auto">
+              <Crop className="h-4 w-4 mr-2" />
+              Adjust Crop
+            </Button>
+          </div>
         )}
       </div>
 

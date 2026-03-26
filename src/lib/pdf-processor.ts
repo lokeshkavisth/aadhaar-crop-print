@@ -4,15 +4,15 @@ import { jsPDF } from 'jspdf';
 // Set worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
-const RENDER_SCALE = 4; // 400 DPI for maximum quality
+const RENDER_SCALE = 5; // 500 DPI for maximum quality
 
 export interface CropRegion {
-  top: number;    // percentage 0-100
-  bottom: number; // percentage 0-100
-  leftStart: number;  // percentage 0-100
-  leftEnd: number;    // percentage 0-100
-  rightStart: number; // percentage 0-100
-  rightEnd: number;   // percentage 0-100
+  top: number;
+  bottom: number;
+  leftStart: number;
+  leftEnd: number;
+  rightStart: number;
+  rightEnd: number;
 }
 
 export const DEFAULT_CROP: CropRegion = {
@@ -32,6 +32,7 @@ export interface ProcessingResult {
 
 export interface PrintOptions {
   showBorder: boolean;
+  roundedCorners: boolean;
 }
 
 export async function loadPdf(file: File, password?: string): Promise<pdfjsLib.PDFDocumentProxy> {
@@ -79,7 +80,8 @@ export async function renderPageToCanvas(
 export function cropFromCanvas(
   canvas: HTMLCanvasElement,
   side: 'front' | 'back',
-  crop: CropRegion
+  crop: CropRegion,
+  roundedCorners: boolean = false
 ): string {
   const cropCanvas = document.createElement('canvas');
   const ctx = cropCanvas.getContext('2d')!;
@@ -104,10 +106,25 @@ export function cropFromCanvas(
   const cropW = sxEnd - sx;
   const cropH = cardBottom - cardTop;
   
-  // Render at exact ID-1 ratio (85.6 / 53.98 ≈ 1.586) at high res
-  // Output canvas at native crop resolution for max quality
   cropCanvas.width = cropW;
   cropCanvas.height = cropH;
+
+  if (roundedCorners) {
+    // ID-1 standard corner radius ~3.18mm on an 85.6mm card ≈ 3.7%
+    const radius = Math.floor(cropW * 0.037);
+    ctx.beginPath();
+    ctx.moveTo(radius, 0);
+    ctx.lineTo(cropW - radius, 0);
+    ctx.quadraticCurveTo(cropW, 0, cropW, radius);
+    ctx.lineTo(cropW, cropH - radius);
+    ctx.quadraticCurveTo(cropW, cropH, cropW - radius, cropH);
+    ctx.lineTo(radius, cropH);
+    ctx.quadraticCurveTo(0, cropH, 0, cropH - radius);
+    ctx.lineTo(0, radius);
+    ctx.quadraticCurveTo(0, 0, radius, 0);
+    ctx.closePath();
+    ctx.clip();
+  }
   
   ctx.drawImage(canvas, sx, cardTop, cropW, cropH, 0, 0, cropW, cropH);
   
@@ -116,15 +133,16 @@ export function cropFromCanvas(
 
 export async function processAadhaarPdf(
   pdf: pdfjsLib.PDFDocumentProxy,
-  crop: CropRegion = DEFAULT_CROP
+  crop: CropRegion = DEFAULT_CROP,
+  roundedCorners: boolean = false
 ): Promise<ProcessingResult> {
   const numPages = pdf.numPages;
   
   if (numPages === 1) {
     const canvas = await renderPageToCanvas(pdf, 1);
     return {
-      frontImage: cropFromCanvas(canvas, 'front', crop),
-      backImage: cropFromCanvas(canvas, 'back', crop),
+      frontImage: cropFromCanvas(canvas, 'front', crop, roundedCorners),
+      backImage: cropFromCanvas(canvas, 'back', crop, roundedCorners),
       fullPageCanvas: canvas,
     };
   } else {
@@ -138,10 +156,29 @@ export async function processAadhaarPdf(
   }
 }
 
+function drawRoundedRect(pdf: jsPDF, x: number, y: number, w: number, h: number, r: number) {
+  pdf.lines(
+    [
+      [w - 2 * r, 0],
+      [r, 0, r, r, 0],
+      [0, h - 2 * r],
+      [0, r, -r, r, 0],
+      [-(w - 2 * r), 0],
+      [-r, 0, -r, -r, 0],
+      [0, -(h - 2 * r)],
+      [0, -r, r, -r, 0],
+    ],
+    x + r,
+    y,
+    [1, 1],
+    'S'
+  );
+}
+
 export function generatePrintPdf(
   frontImage: string,
   backImage: string,
-  options: PrintOptions = { showBorder: false }
+  options: PrintOptions = { showBorder: false, roundedCorners: false }
 ): Blob {
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -153,29 +190,37 @@ export function generatePrintPdf(
   // Official ID-1 standard: 85.6mm × 53.98mm (ISO/IEC 7810)
   const cardW = 85.6;
   const cardH = 53.98;
+  // ID-1 corner radius: 3.18mm
+  const cornerR = 3.18;
   
   const pageW = 210;
   
-  // Side-by-side layout
   const gap = 4;
   const totalW = cardW * 2 + gap;
   const startX = (pageW - totalW) / 2;
   const y = 15;
   
-  // Use JPEG format in jsPDF for better quality handling with addImage
   pdf.addImage(frontImage, 'PNG', startX, y, cardW, cardH);
   
   if (options.showBorder) {
     pdf.setDrawColor(150);
     pdf.setLineWidth(0.2);
     pdf.setLineDashPattern([2, 2], 0);
-    pdf.rect(startX, y, cardW, cardH);
+    if (options.roundedCorners) {
+      drawRoundedRect(pdf, startX, y, cardW, cardH, cornerR);
+    } else {
+      pdf.rect(startX, y, cardW, cardH);
+    }
   }
   
   pdf.addImage(backImage, 'PNG', startX + cardW + gap, y, cardW, cardH);
   
   if (options.showBorder) {
-    pdf.rect(startX + cardW + gap, y, cardW, cardH);
+    if (options.roundedCorners) {
+      drawRoundedRect(pdf, startX + cardW + gap, y, cardW, cardH, cornerR);
+    } else {
+      pdf.rect(startX + cardW + gap, y, cardW, cardH);
+    }
   }
   
   return pdf.output('blob');
