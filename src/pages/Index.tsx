@@ -3,16 +3,20 @@ import { Shield, Loader2 } from 'lucide-react';
 import { FileUpload } from '@/components/FileUpload';
 import { PasswordInput } from '@/components/PasswordInput';
 import { PreviewSection } from '@/components/PreviewSection';
+import { ManualCropControls } from '@/components/ManualCropControls';
 import { StepsGuide } from '@/components/StepsGuide';
 import {
   checkIfPasswordProtected,
   loadPdf,
   processAadhaarPdf,
   generatePrintPdf,
+  cropFromCanvas,
+  DEFAULT_CROP,
   type ProcessingResult,
+  type CropRegion,
 } from '@/lib/pdf-processor';
 
-type AppState = 'idle' | 'checking' | 'needs-password' | 'processing' | 'preview';
+type AppState = 'idle' | 'checking' | 'needs-password' | 'processing' | 'preview' | 'manual-crop';
 
 const Index = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -20,6 +24,9 @@ const Index = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [result, setResult] = useState<ProcessingResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showBorder, setShowBorder] = useState(false);
+  const [crop, setCrop] = useState<CropRegion>(DEFAULT_CROP);
+  const [pdfDoc, setPdfDoc] = useState<any>(null);
 
   const handleFileSelect = useCallback(async (selectedFile: File) => {
     setFile(selectedFile);
@@ -31,9 +38,9 @@ const Index = () => {
       if (isProtected) {
         setState('needs-password');
       } else {
-        // Not protected, process directly
         setState('processing');
         const pdf = await loadPdf(selectedFile);
+        setPdfDoc(pdf);
         const processed = await processAadhaarPdf(pdf);
         setResult(processed);
         setState('preview');
@@ -52,6 +59,7 @@ const Index = () => {
 
     try {
       const pdf = await loadPdf(file, password);
+      setPdfDoc(pdf);
       const processed = await processAadhaarPdf(pdf);
       setResult(processed);
       setState('preview');
@@ -71,7 +79,7 @@ const Index = () => {
     setIsGenerating(true);
 
     try {
-      const blob = generatePrintPdf(result.frontImage, result.backImage);
+      const blob = generatePrintPdf(result.frontImage, result.backImage, { showBorder });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -81,13 +89,34 @@ const Index = () => {
     } finally {
       setIsGenerating(false);
     }
-  }, [result]);
+  }, [result, showBorder]);
 
   const handleReset = useCallback(() => {
     setFile(null);
     setState('idle');
     setResult(null);
     setPasswordError(null);
+    setCrop(DEFAULT_CROP);
+    setPdfDoc(null);
+  }, []);
+
+  const handleManualCrop = useCallback(() => {
+    setState('manual-crop');
+  }, []);
+
+  const handleApplyCrop = useCallback(() => {
+    if (!result?.fullPageCanvas) return;
+    const canvas = result.fullPageCanvas;
+    setResult({
+      frontImage: cropFromCanvas(canvas, 'front', crop),
+      backImage: cropFromCanvas(canvas, 'back', crop),
+      fullPageCanvas: canvas,
+    });
+    setState('preview');
+  }, [result, crop]);
+
+  const handleResetCrop = useCallback(() => {
+    setCrop(DEFAULT_CROP);
   }, []);
 
   return (
@@ -106,16 +135,13 @@ const Index = () => {
 
       {/* Main */}
       <main className="container max-w-2xl mx-auto px-4 py-8 space-y-8">
-        {/* Steps */}
         <StepsGuide />
 
-        {/* Upload */}
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Upload Aadhaar PDF</h2>
           <FileUpload file={file} onFileSelect={handleFileSelect} onClear={handleReset} />
         </section>
 
-        {/* Checking spinner */}
         {state === 'checking' && (
           <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -123,7 +149,6 @@ const Index = () => {
           </div>
         )}
 
-        {/* Password */}
         {state === 'needs-password' && (
           <PasswordInput
             onSubmit={handlePasswordSubmit}
@@ -132,7 +157,6 @@ const Index = () => {
           />
         )}
 
-        {/* Processing */}
         {state === 'processing' && (
           <div className="flex flex-col items-center justify-center gap-3 py-10">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -140,7 +164,6 @@ const Index = () => {
           </div>
         )}
 
-        {/* Preview */}
         {state === 'preview' && result && (
           <section className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground">Preview</h2>
@@ -150,11 +173,27 @@ const Index = () => {
               onDownload={handleDownload}
               onReset={handleReset}
               isGenerating={isGenerating}
+              showBorder={showBorder}
+              onBorderToggle={setShowBorder}
+              canManualCrop={!!result.fullPageCanvas}
+              onManualCrop={handleManualCrop}
             />
           </section>
         )}
 
-        {/* Instructions */}
+        {state === 'manual-crop' && result?.fullPageCanvas && (
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">Adjust Crop Region</h2>
+            <ManualCropControls
+              fullPageCanvas={result.fullPageCanvas}
+              crop={crop}
+              onChange={setCrop}
+              onApply={handleApplyCrop}
+              onReset={handleResetCrop}
+            />
+          </section>
+        )}
+
         {state === 'idle' && !file && (
           <section className="rounded-xl border border-border bg-card p-6 space-y-3">
             <h2 className="text-lg font-semibold text-foreground">How it works</h2>
@@ -168,7 +207,6 @@ const Index = () => {
         )}
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-border bg-card mt-auto">
         <div className="container max-w-2xl mx-auto px-4 py-6 text-center">
           <div className="flex items-center justify-center gap-2 text-muted-foreground mb-2">
