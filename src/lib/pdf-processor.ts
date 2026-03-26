@@ -57,25 +57,35 @@ function cropAadhaarRegion(
   canvas: HTMLCanvasElement,
   side: 'front' | 'back'
 ): string {
-  // Standard e-Aadhaar PDF layout (single page, Letter 8.5x11):
-  // The card front and back are side-by-side at the bottom ~28% of the page.
-  // Front card is on the left half, back card is on the right half.
+  // Standard e-Aadhaar PDF layout (single page, Letter 8.5x11 = 612x792 pts):
+  // The card front and back are side-by-side in the bottom section.
+  // Calibrated from actual UIDAI e-Aadhaar PDFs at 300 DPI (2550x3300 px).
+  // Front card = left half, Back card = right half.
   const cropCanvas = document.createElement('canvas');
   const ctx = cropCanvas.getContext('2d')!;
   
   const w = canvas.width;
   const h = canvas.height;
   
-  // Card region starts at ~72% from top, ends at ~96% from top
-  const cardTop = Math.floor(h * 0.72);
-  const cardBottom = Math.floor(h * 0.96);
+  // Card region: top at 72.42%, bottom at 97.21% of page height
+  const cardTop = Math.floor(h * 0.7242);
+  const cardBottom = Math.floor(h * 0.9721);
   const midX = Math.floor(w / 2);
   
-  // Small margin to trim dashed border lines
-  const margin = Math.floor(w * 0.01);
+  // ~2% margin from edges to exclude dashed cut lines
+  const margin = Math.floor(w * 0.0196);
   
-  const sx = side === 'front' ? margin : midX;
-  const cropW = midX - margin;
+  let sx: number;
+  let cropW: number;
+  
+  if (side === 'front') {
+    sx = margin;
+    cropW = midX - margin;
+  } else {
+    sx = midX + margin;
+    cropW = midX - margin;
+  }
+  
   const cropH = cardBottom - cardTop;
   
   cropCanvas.width = cropW;
