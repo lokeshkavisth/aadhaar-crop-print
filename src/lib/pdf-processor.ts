@@ -125,40 +125,31 @@ export function generatePrintPdf(frontImage: string, backImage: string): Blob {
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
-    compress: false, // No compression for max quality
+    compress: false,
   });
   
-  // Aadhaar card standard size: 85.6mm x 53.98mm (credit card)
+  // Aadhaar card standard size: 85.6mm x 53.98mm (ID-1)
   const cardW = 85.6;
   const cardH = 54;
   
-  // Center on page
   const pageW = 210;
-  const pageH = 297;
-  const x = (pageW - cardW) / 2;
   
-  // Front side
-  const frontY = 30;
-  pdf.setFontSize(10);
-  pdf.setTextColor(100);
-  pdf.text('Aadhaar Card - Front', pageW / 2, frontY - 5, { align: 'center' });
-  pdf.addImage(frontImage, 'PNG', x, frontY, cardW, cardH);
+  // Side-by-side layout: both cards next to each other
+  const gap = 4; // gap between cards
+  const totalW = cardW * 2 + gap;
+  const startX = (pageW - totalW) / 2;
+  const y = 15; // top margin
   
-  // Draw border
-  pdf.setDrawColor(200);
-  pdf.setLineWidth(0.3);
-  pdf.rect(x, frontY, cardW, cardH);
+  // Front side (left)
+  pdf.addImage(frontImage, 'PNG', startX, y, cardW, cardH);
+  pdf.setDrawColor(180);
+  pdf.setLineWidth(0.2);
+  pdf.setLineDashPattern([2, 2], 0);
+  pdf.rect(startX, y, cardW, cardH);
   
-  // Back side
-  const backY = frontY + cardH + 20;
-  pdf.text('Aadhaar Card - Back', pageW / 2, backY - 5, { align: 'center' });
-  pdf.addImage(backImage, 'PNG', x, backY, cardW, cardH);
-  pdf.rect(x, backY, cardW, cardH);
-  
-  // Cut line instructions
-  pdf.setFontSize(8);
-  pdf.setTextColor(150);
-  pdf.text('Cut along the border lines', pageW / 2, backY + cardH + 10, { align: 'center' });
+  // Back side (right)
+  pdf.addImage(backImage, 'PNG', startX + cardW + gap, y, cardW, cardH);
+  pdf.rect(startX + cardW + gap, y, cardW, cardH);
   
   return pdf.output('blob');
 }
