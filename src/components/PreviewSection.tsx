@@ -1,5 +1,7 @@
-import { Download, RotateCcw } from 'lucide-react';
+import { Download, RotateCcw, Crop } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface PreviewSectionProps {
   frontImage: string;
@@ -7,6 +9,10 @@ interface PreviewSectionProps {
   onDownload: () => void;
   onReset: () => void;
   isGenerating: boolean;
+  showBorder: boolean;
+  onBorderToggle: (v: boolean) => void;
+  canManualCrop: boolean;
+  onManualCrop: () => void;
 }
 
 export function PreviewSection({
@@ -15,6 +21,10 @@ export function PreviewSection({
   onDownload,
   onReset,
   isGenerating,
+  showBorder,
+  onBorderToggle,
+  canManualCrop,
+  onManualCrop,
 }: PreviewSectionProps) {
   return (
     <div className="space-y-6">
@@ -31,6 +41,26 @@ export function PreviewSection({
             <img src={backImage} alt="Aadhaar Back" className="w-full h-auto" />
           </div>
         </div>
+      </div>
+
+      {/* Options */}
+      <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
+        <div className="flex items-center gap-3">
+          <Switch
+            id="border-toggle"
+            checked={showBorder}
+            onCheckedChange={onBorderToggle}
+          />
+          <Label htmlFor="border-toggle" className="text-sm text-foreground cursor-pointer">
+            Show cut border in PDF
+          </Label>
+        </div>
+        {canManualCrop && (
+          <Button variant="outline" size="sm" onClick={onManualCrop}>
+            <Crop className="h-4 w-4 mr-2" />
+            Adjust Crop
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
