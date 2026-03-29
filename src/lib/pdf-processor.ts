@@ -33,6 +33,10 @@ export interface ProcessingResult {
 export interface PrintOptions {
   showBorder: boolean;
   roundedCorners: boolean;
+  gap: number;
+  marginTop: number;
+  marginLeft: number;
+  autoCenter: boolean;
 }
 
 export async function loadPdf(file: File, password?: string): Promise<pdfjsLib.PDFDocumentProxy> {
@@ -77,17 +81,91 @@ export async function renderPageToCanvas(
   return canvas;
 }
 
+export interface ImageFilters {
+  brightness: number;
+  contrast: number;
+  sharpen: number;
+  grayscale: boolean;
+}
+
+export const DEFAULT_FILTERS: ImageFilters = {
+  brightness: 1,
+  contrast: 1,
+  sharpen: 0,
+  grayscale: false,
+};
+
+function applyFilters(
+  canvas: HTMLCanvasElement,
+  filters: ImageFilters
+): HTMLCanvasElement {
+  if (
+    filters.brightness === 1 &&
+    filters.contrast === 1 &&
+    filters.sharpen === 0 &&
+    !filters.grayscale
+  ) {
+    return canvas;
+  }
+
+  const out = document.createElement('canvas');
+  out.width = canvas.width;
+  out.height = canvas.height;
+  const ctx = out.getContext('2d')!;
+
+  // Build CSS filter string
+  const parts: string[] = [];
+  if (filters.brightness !== 1) parts.push(`brightness(${filters.brightness})`);
+  if (filters.contrast !== 1) parts.push(`contrast(${filters.contrast})`);
+  if (filters.grayscale) parts.push('grayscale(1)');
+  ctx.filter = parts.length > 0 ? parts.join(' ') : 'none';
+
+  ctx.drawImage(canvas, 0, 0);
+  ctx.filter = 'none';
+
+  // Sharpen via unsharp mask
+  if (filters.sharpen > 0) {
+    const strength = filters.sharpen;
+    const imgData = ctx.getImageData(0, 0, out.width, out.height);
+    const d = imgData.data;
+    const w = out.width;
+    const h = out.height;
+    const copy = new Uint8ClampedArray(d);
+
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const idx = (y * w + x) * 4;
+        for (let c = 0; c < 3; c++) {
+          const center = copy[idx + c] * 5;
+          const neighbors =
+            copy[((y - 1) * w + x) * 4 + c] +
+            copy[((y + 1) * w + x) * 4 + c] +
+            copy[(y * w + (x - 1)) * 4 + c] +
+            copy[(y * w + (x + 1)) * 4 + c];
+          const sharpened = copy[idx + c] + (center - neighbors - copy[idx + c]) * strength;
+          d[idx + c] = Math.max(0, Math.min(255, sharpened));
+        }
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+  }
+
+  return out;
+}
+
 export function cropFromCanvas(
   canvas: HTMLCanvasElement,
   side: 'front' | 'back',
   crop: CropRegion,
-  roundedCorners: boolean = false
+  roundedCorners: boolean = false,
+  filters: ImageFilters = DEFAULT_FILTERS
 ): string {
+  const filtered = applyFilters(canvas, filters);
   const cropCanvas = document.createElement('canvas');
   const ctx = cropCanvas.getContext('2d')!;
   
-  const w = canvas.width;
-  const h = canvas.height;
+  const w = filtered.width;
+  const h = filtered.height;
   
   const cardTop = Math.floor(h * (crop.top / 100));
   const cardBottom = Math.floor(h * (crop.bottom / 100));
@@ -110,7 +188,6 @@ export function cropFromCanvas(
   cropCanvas.height = cropH;
 
   if (roundedCorners) {
-    // ID-1 standard corner radius ~3.18mm on an 85.6mm card ≈ 3.7%
     const radius = Math.floor(cropW * 0.037);
     ctx.beginPath();
     ctx.moveTo(radius, 0);
@@ -126,7 +203,7 @@ export function cropFromCanvas(
     ctx.clip();
   }
   
-  ctx.drawImage(canvas, sx, cardTop, cropW, cropH, 0, 0, cropW, cropH);
+  ctx.drawImage(filtered, sx, cardTop, cropW, cropH, 0, 0, cropW, cropH);
   
   return cropCanvas.toDataURL('image/png', 1.0);
 }
@@ -178,7 +255,14 @@ function drawRoundedRect(pdf: jsPDF, x: number, y: number, w: number, h: number,
 export function generatePrintPdf(
   frontImage: string,
   backImage: string,
-  options: PrintOptions = { showBorder: false, roundedCorners: false }
+  options: PrintOptions = {
+    showBorder: false,
+    roundedCorners: false,
+    gap: 4,
+    marginTop: 15,
+    marginLeft: 0,
+    autoCenter: true,
+  }
 ): Blob {
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -187,18 +271,17 @@ export function generatePrintPdf(
     compress: false,
   });
   
-  // Official ID-1 standard: 85.6mm × 53.98mm (ISO/IEC 7810)
   const cardW = 85.6;
   const cardH = 53.98;
-  // ID-1 corner radius: 3.18mm
   const cornerR = 3.18;
   
   const pageW = 210;
-  
-  const gap = 4;
+  const gap = options.gap;
   const totalW = cardW * 2 + gap;
-  const startX = (pageW - totalW) / 2;
-  const y = 15;
+  const startX = options.autoCenter
+    ? (pageW - totalW) / 2
+    : options.marginLeft;
+  const y = options.marginTop;
   
   pdf.addImage(frontImage, 'PNG', startX, y, cardW, cardH);
   
