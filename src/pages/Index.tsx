@@ -5,6 +5,8 @@ import { PasswordInput } from '@/components/PasswordInput';
 import { PreviewSection } from '@/components/PreviewSection';
 import { ManualCropControls } from '@/components/ManualCropControls';
 import { StepsGuide } from '@/components/StepsGuide';
+import { PrintLayoutControls, DEFAULT_LAYOUT, type PrintLayout } from '@/components/PrintLayoutControls';
+import { ImageFilterControls, DEFAULT_FILTERS, type ImageFilters } from '@/components/ImageFilterControls';
 import {
   checkIfPasswordProtected,
   loadPdf,
@@ -28,6 +30,21 @@ const Index = () => {
   const [roundedCorners, setRoundedCorners] = useState(false);
   const [crop, setCrop] = useState<CropRegion>(DEFAULT_CROP);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [layout, setLayout] = useState<PrintLayout>(DEFAULT_LAYOUT);
+  const [filters, setFilters] = useState<ImageFilters>(DEFAULT_FILTERS);
+
+  const reprocessWithOptions = useCallback((
+    canvas: HTMLCanvasElement,
+    cropRegion: CropRegion,
+    rounded: boolean,
+    imgFilters: ImageFilters
+  ) => {
+    setResult({
+      frontImage: cropFromCanvas(canvas, 'front', cropRegion, rounded, imgFilters),
+      backImage: cropFromCanvas(canvas, 'back', cropRegion, rounded, imgFilters),
+      fullPageCanvas: canvas,
+    });
+  }, []);
 
   const handleFileSelect = useCallback(async (selectedFile: File) => {
     setFile(selectedFile);
@@ -77,23 +94,31 @@ const Index = () => {
 
   const handleRoundedToggle = useCallback((enabled: boolean) => {
     setRoundedCorners(enabled);
-    // Re-crop with new rounded setting
     if (result?.fullPageCanvas) {
-      const canvas = result.fullPageCanvas;
-      setResult({
-        frontImage: cropFromCanvas(canvas, 'front', crop, enabled),
-        backImage: cropFromCanvas(canvas, 'back', crop, enabled),
-        fullPageCanvas: canvas,
-      });
+      reprocessWithOptions(result.fullPageCanvas, crop, enabled, filters);
     }
-  }, [result, crop]);
+  }, [result, crop, filters, reprocessWithOptions]);
+
+  const handleFiltersChange = useCallback((newFilters: ImageFilters) => {
+    setFilters(newFilters);
+    if (result?.fullPageCanvas) {
+      reprocessWithOptions(result.fullPageCanvas, crop, roundedCorners, newFilters);
+    }
+  }, [result, crop, roundedCorners, reprocessWithOptions]);
 
   const handleDownload = useCallback(() => {
     if (!result) return;
     setIsGenerating(true);
 
     try {
-      const blob = generatePrintPdf(result.frontImage, result.backImage, { showBorder, roundedCorners });
+      const blob = generatePrintPdf(result.frontImage, result.backImage, {
+        showBorder,
+        roundedCorners,
+        gap: layout.gap,
+        marginTop: layout.marginTop,
+        marginLeft: layout.marginLeft,
+        autoCenter: layout.autoCenter,
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -103,7 +128,7 @@ const Index = () => {
     } finally {
       setIsGenerating(false);
     }
-  }, [result, showBorder, roundedCorners]);
+  }, [result, showBorder, roundedCorners, layout]);
 
   const handleReset = useCallback(() => {
     setFile(null);
@@ -114,6 +139,8 @@ const Index = () => {
     setPdfDoc(null);
     setRoundedCorners(false);
     setShowBorder(false);
+    setLayout(DEFAULT_LAYOUT);
+    setFilters(DEFAULT_FILTERS);
   }, []);
 
   const handleManualCrop = useCallback(() => {
@@ -122,14 +149,9 @@ const Index = () => {
 
   const handleApplyCrop = useCallback(() => {
     if (!result?.fullPageCanvas) return;
-    const canvas = result.fullPageCanvas;
-    setResult({
-      frontImage: cropFromCanvas(canvas, 'front', crop, roundedCorners),
-      backImage: cropFromCanvas(canvas, 'back', crop, roundedCorners),
-      fullPageCanvas: canvas,
-    });
+    reprocessWithOptions(result.fullPageCanvas, crop, roundedCorners, filters);
     setState('preview');
-  }, [result, crop, roundedCorners]);
+  }, [result, crop, roundedCorners, filters, reprocessWithOptions]);
 
   const handleResetCrop = useCallback(() => {
     setCrop(DEFAULT_CROP);
@@ -179,7 +201,7 @@ const Index = () => {
         )}
 
         {state === 'preview' && result && (
-          <section className="space-y-4">
+          <section className="space-y-6">
             <h2 className="text-lg font-semibold text-foreground">Preview</h2>
             <PreviewSection
               frontImage={result.frontImage}
@@ -194,6 +216,18 @@ const Index = () => {
               canManualCrop={!!result.fullPageCanvas}
               onManualCrop={handleManualCrop}
             />
+
+            {/* Image Filters */}
+            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Image Filters</h3>
+              <ImageFilterControls filters={filters} onChange={handleFiltersChange} />
+            </div>
+
+            {/* Print Layout */}
+            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Print Layout</h3>
+              <PrintLayoutControls layout={layout} onChange={setLayout} />
+            </div>
           </section>
         )}
 
@@ -217,7 +251,7 @@ const Index = () => {
               <li>Upload your original Aadhaar letter PDF downloaded from UIDAI</li>
               <li>Enter the password (usually your PIN code or DOB in DDMMYYYY format)</li>
               <li>The tool automatically crops the front and back of your Aadhaar card</li>
-              <li>Download the print-ready PDF optimized for A4 paper</li>
+              <li>Adjust filters, layout, and download the print-ready PDF</li>
             </ol>
           </section>
         )}
