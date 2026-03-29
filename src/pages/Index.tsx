@@ -5,8 +5,10 @@ import { PasswordInput } from '@/components/PasswordInput';
 import { PreviewSection } from '@/components/PreviewSection';
 import { ManualCropControls } from '@/components/ManualCropControls';
 import { StepsGuide } from '@/components/StepsGuide';
-import { PrintLayoutControls, DEFAULT_LAYOUT, type PrintLayout } from '@/components/PrintLayoutControls';
-import { ImageFilterControls, DEFAULT_FILTERS, type ImageFilters } from '@/components/ImageFilterControls';
+import { OptionsPanel } from '@/components/OptionsPanel';
+import { PrintPreview } from '@/components/PrintPreview';
+import { DEFAULT_LAYOUT, type PrintLayout } from '@/components/PrintLayoutControls';
+import { DEFAULT_FILTERS, type ImageFilters } from '@/components/ImageFilterControls';
 import {
   checkIfPasswordProtected,
   loadPdf,
@@ -50,7 +52,6 @@ const Index = () => {
     setFile(selectedFile);
     setPasswordError(null);
     setState('checking');
-
     try {
       const isProtected = await checkIfPasswordProtected(selectedFile);
       if (isProtected) {
@@ -74,7 +75,6 @@ const Index = () => {
     if (!file) return;
     setPasswordError(null);
     setState('processing');
-
     try {
       const pdf = await loadPdf(file, password);
       setPdfDoc(pdf);
@@ -84,11 +84,10 @@ const Index = () => {
     } catch (error: any) {
       if (error?.name === 'PasswordException') {
         setPasswordError('Incorrect password. Please try again.');
-        setState('needs-password');
       } else {
         setPasswordError('Failed to process PDF. Please try again.');
-        setState('needs-password');
       }
+      setState('needs-password');
     }
   }, [file]);
 
@@ -109,7 +108,6 @@ const Index = () => {
   const handleDownload = useCallback(() => {
     if (!result) return;
     setIsGenerating(true);
-
     try {
       const blob = generatePrintPdf(result.frontImage, result.backImage, {
         showBorder,
@@ -158,82 +156,117 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container max-w-2xl mx-auto px-4 py-6 text-center">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            Aadhaar Card Crop & Print Tool
-          </h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Upload your Aadhaar PDF, enter password, and get a print-ready version instantly.
-          </p>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="container max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
+          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Shield className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-lg sm:text-xl font-bold text-foreground leading-tight">
+              Aadhaar Card Crop & Print
+            </h1>
+            <p className="text-xs text-muted-foreground hidden sm:block">
+              100% offline • No data uploaded • Browser-only processing
+            </p>
+          </div>
         </div>
       </header>
 
-      <main className="container max-w-2xl mx-auto px-4 py-8 space-y-8">
-        <StepsGuide />
+      {/* Main */}
+      <main className="flex-1 container max-w-3xl mx-auto px-4 py-6 space-y-6">
+        {/* Steps - only show when idle */}
+        {state === 'idle' && !file && <StepsGuide />}
 
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Upload Aadhaar PDF</h2>
+        {/* Upload */}
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+            {state === 'idle' ? '1. Upload Aadhaar PDF' : 'Uploaded File'}
+          </h2>
           <FileUpload file={file} onFileSelect={handleFileSelect} onClear={handleReset} />
         </section>
 
+        {/* Checking */}
         {state === 'checking' && (
-          <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
+          <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
             <span className="text-sm">Checking PDF...</span>
           </div>
         )}
 
+        {/* Password */}
         {state === 'needs-password' && (
-          <PasswordInput
-            onSubmit={handlePasswordSubmit}
-            isLoading={false}
-            error={passwordError}
-          />
+          <PasswordInput onSubmit={handlePasswordSubmit} isLoading={false} error={passwordError} />
         )}
 
+        {/* Processing */}
         {state === 'processing' && (
-          <div className="flex flex-col items-center justify-center gap-3 py-10">
+          <div className="flex flex-col items-center justify-center gap-3 py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Processing your Aadhaar PDF...</p>
           </div>
         )}
 
+        {/* Preview */}
         {state === 'preview' && result && (
-          <section className="space-y-6">
-            <h2 className="text-lg font-semibold text-foreground">Preview</h2>
-            <PreviewSection
-              frontImage={result.frontImage}
-              backImage={result.backImage}
-              onDownload={handleDownload}
-              onReset={handleReset}
-              isGenerating={isGenerating}
-              showBorder={showBorder}
-              onBorderToggle={setShowBorder}
-              roundedCorners={roundedCorners}
-              onRoundedToggle={handleRoundedToggle}
-              canManualCrop={!!result.fullPageCanvas}
-              onManualCrop={handleManualCrop}
-            />
+          <>
+            {/* Card Preview */}
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                Card Preview
+              </h2>
+              <PreviewSection
+                frontImage={result.frontImage}
+                backImage={result.backImage}
+                onDownload={handleDownload}
+                onReset={handleReset}
+                isGenerating={isGenerating}
+                roundedCorners={roundedCorners}
+              />
+            </section>
 
-            {/* Image Filters */}
-            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">Image Filters</h3>
-              <ImageFilterControls filters={filters} onChange={handleFiltersChange} />
-            </div>
+            {/* Options Panel (tabbed) */}
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                Options
+              </h2>
+              <OptionsPanel
+                showBorder={showBorder}
+                onBorderToggle={setShowBorder}
+                roundedCorners={roundedCorners}
+                onRoundedToggle={handleRoundedToggle}
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                layout={layout}
+                onLayoutChange={setLayout}
+                canManualCrop={!!result.fullPageCanvas}
+                onManualCrop={handleManualCrop}
+              />
+            </section>
 
-            {/* Print Layout */}
-            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-              <h3 className="text-sm font-semibold text-foreground">Print Layout</h3>
-              <PrintLayoutControls layout={layout} onChange={setLayout} />
-            </div>
-          </section>
+            {/* Live Print Preview */}
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                Print Preview
+              </h2>
+              <PrintPreview
+                frontImage={result.frontImage}
+                backImage={result.backImage}
+                showBorder={showBorder}
+                roundedCorners={roundedCorners}
+                layout={layout}
+              />
+            </section>
+          </>
         )}
 
+        {/* Manual Crop */}
         {state === 'manual-crop' && result?.fullPageCanvas && (
-          <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">Adjust Crop Region</h2>
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+              Adjust Crop Region
+            </h2>
             <ManualCropControls
               fullPageCanvas={result.fullPageCanvas}
               crop={crop}
@@ -244,27 +277,26 @@ const Index = () => {
           </section>
         )}
 
+        {/* How it works */}
         {state === 'idle' && !file && (
-          <section className="rounded-xl border border-border bg-card p-6 space-y-3">
-            <h2 className="text-lg font-semibold text-foreground">How it works</h2>
-            <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-              <li>Upload your original Aadhaar letter PDF downloaded from UIDAI</li>
-              <li>Enter the password (usually your PIN code or DOB in DDMMYYYY format)</li>
-              <li>The tool automatically crops the front and back of your Aadhaar card</li>
-              <li>Adjust filters, layout, and download the print-ready PDF</li>
+          <section className="rounded-xl border border-border bg-card p-5 space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">How it works</h2>
+            <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
+              <li>Upload your original Aadhaar letter PDF from UIDAI</li>
+              <li>Enter the password (PIN code or DOB in DDMMYYYY)</li>
+              <li>Auto-crops front & back of your Aadhaar card</li>
+              <li>Adjust filters, layout, and download print-ready PDF</li>
             </ol>
           </section>
         )}
       </main>
 
-      <footer className="border-t border-border bg-card mt-auto">
-        <div className="container max-w-2xl mx-auto px-4 py-6 text-center">
-          <div className="flex items-center justify-center gap-2 text-muted-foreground mb-2">
-            <Shield className="h-4 w-4" />
-            <span className="text-xs font-medium">Your Privacy is Protected</span>
-          </div>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto">
-            Your Aadhaar data is not stored. All processing happens entirely in your browser. No data is uploaded to any server.
+      {/* Footer */}
+      <footer className="border-t border-border bg-card/50 mt-auto">
+        <div className="container max-w-3xl mx-auto px-4 py-4 text-center">
+          <p className="text-xs text-muted-foreground">
+            <Shield className="h-3 w-3 inline-block mr-1 -mt-0.5" />
+            All processing happens in your browser. No data is uploaded to any server.
           </p>
         </div>
       </footer>
