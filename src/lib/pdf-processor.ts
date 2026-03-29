@@ -255,7 +255,14 @@ function drawRoundedRect(pdf: jsPDF, x: number, y: number, w: number, h: number,
 export function generatePrintPdf(
   frontImage: string,
   backImage: string,
-  options: PrintOptions = { showBorder: false, roundedCorners: false }
+  options: PrintOptions = {
+    showBorder: false,
+    roundedCorners: false,
+    gap: 4,
+    marginTop: 15,
+    marginLeft: 0,
+    autoCenter: true,
+  }
 ): Blob {
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -264,18 +271,17 @@ export function generatePrintPdf(
     compress: false,
   });
   
-  // Official ID-1 standard: 85.6mm × 53.98mm (ISO/IEC 7810)
   const cardW = 85.6;
   const cardH = 53.98;
-  // ID-1 corner radius: 3.18mm
   const cornerR = 3.18;
   
   const pageW = 210;
-  
-  const gap = 4;
+  const gap = options.gap;
   const totalW = cardW * 2 + gap;
-  const startX = (pageW - totalW) / 2;
-  const y = 15;
+  const startX = options.autoCenter
+    ? (pageW - totalW) / 2
+    : options.marginLeft;
+  const y = options.marginTop;
   
   pdf.addImage(frontImage, 'PNG', startX, y, cardW, cardH);
   
