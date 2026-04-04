@@ -32,26 +32,26 @@ export function OptionsPanel({
   onManualCrop,
 }: OptionsPanelProps) {
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div className="glass-card rounded-xl overflow-hidden">
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="w-full rounded-none border-b border-border bg-muted/50 h-auto p-0">
+        <TabsList className="w-full rounded-none border-b border-border/50 bg-muted/30 h-auto p-0">
           <TabsTrigger
             value="general"
-            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 text-xs gap-1.5"
+            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 text-xs gap-1.5 font-medium"
           >
             <Settings2 className="h-3.5 w-3.5" />
             General
           </TabsTrigger>
           <TabsTrigger
             value="filters"
-            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 text-xs gap-1.5"
+            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 text-xs gap-1.5 font-medium"
           >
             <Palette className="h-3.5 w-3.5" />
             Filters
           </TabsTrigger>
           <TabsTrigger
             value="layout"
-            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 text-xs gap-1.5"
+            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 text-xs gap-1.5 font-medium"
           >
             <Layout className="h-3.5 w-3.5" />
             Layout
@@ -60,31 +60,31 @@ export function OptionsPanel({
 
         <div className="p-4">
           <TabsContent value="general" className="mt-0 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
+                <Label htmlFor="rounded-opt" className="text-sm text-foreground cursor-pointer">
+                  Rounded corners
+                </Label>
                 <Switch
                   id="rounded-opt"
                   checked={roundedCorners}
                   onCheckedChange={onRoundedToggle}
                 />
-                <Label htmlFor="rounded-opt" className="text-sm text-foreground cursor-pointer">
-                  Rounded corners
-                </Label>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
+                <Label htmlFor="border-opt" className="text-sm text-foreground cursor-pointer">
+                  Cut border in PDF
+                </Label>
                 <Switch
                   id="border-opt"
                   checked={showBorder}
                   onCheckedChange={onBorderToggle}
                 />
-                <Label htmlFor="border-opt" className="text-sm text-foreground cursor-pointer">
-                  Cut border in PDF
-                </Label>
               </div>
             </div>
             {canManualCrop && (
-              <Button variant="outline" size="sm" onClick={onManualCrop} className="w-full sm:w-auto">
-                <Crop className="h-4 w-4 mr-2" />
+              <Button variant="outline" size="sm" onClick={onManualCrop} className="w-full gap-2">
+                <Crop className="h-4 w-4" />
                 Adjust Crop Region
               </Button>
             )}
