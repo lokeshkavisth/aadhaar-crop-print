@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import { Shield, Loader2 } from 'lucide-react';
+import { Shield, Loader2, Download, Printer, RotateCcw, Fingerprint } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/FileUpload';
 import { PasswordInput } from '@/components/PasswordInput';
-import { PreviewSection } from '@/components/PreviewSection';
 import { ManualCropControls } from '@/components/ManualCropControls';
 import { StepsGuide } from '@/components/StepsGuide';
 import { OptionsPanel } from '@/components/OptionsPanel';
@@ -34,6 +34,15 @@ const Index = () => {
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [layout, setLayout] = useState<PrintLayout>(DEFAULT_LAYOUT);
   const [filters, setFilters] = useState<ImageFilters>(DEFAULT_FILTERS);
+
+  const pdfOptions = {
+    showBorder,
+    roundedCorners,
+    gap: layout.gap,
+    marginTop: layout.marginTop,
+    marginLeft: layout.marginLeft,
+    autoCenter: layout.autoCenter,
+  };
 
   const reprocessWithOptions = useCallback((
     canvas: HTMLCanvasElement,
@@ -105,18 +114,16 @@ const Index = () => {
     }
   }, [result, crop, roundedCorners, reprocessWithOptions]);
 
+  const createPdfBlob = useCallback(() => {
+    if (!result) return null;
+    return generatePrintPdf(result.frontImage, result.backImage, pdfOptions);
+  }, [result, pdfOptions]);
+
   const handleDownload = useCallback(() => {
-    if (!result) return;
     setIsGenerating(true);
     try {
-      const blob = generatePrintPdf(result.frontImage, result.backImage, {
-        showBorder,
-        roundedCorners,
-        gap: layout.gap,
-        marginTop: layout.marginTop,
-        marginLeft: layout.marginLeft,
-        autoCenter: layout.autoCenter,
-      });
+      const blob = createPdfBlob();
+      if (!blob) return;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -126,7 +133,24 @@ const Index = () => {
     } finally {
       setIsGenerating(false);
     }
-  }, [result, showBorder, roundedCorners, layout]);
+  }, [createPdfBlob]);
+
+  const handlePrint = useCallback(() => {
+    const blob = createPdfBlob();
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    iframe.onload = () => {
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+        URL.revokeObjectURL(url);
+      }, 1000);
+    };
+  }, [createPdfBlob]);
 
   const handleReset = useCallback(() => {
     setFile(null);
@@ -155,118 +179,94 @@ const Index = () => {
     setCrop(DEFAULT_CROP);
   }, []);
 
+  const isPreview = state === 'preview' && result;
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Shield className="h-5 w-5 text-primary" />
+      <header className="border-b border-border/60 bg-card/70 backdrop-blur-xl sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Fingerprint className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
+                Aadhaar Card Cutter
+              </h1>
+              <p className="text-[11px] text-muted-foreground hidden sm:block">
+                Crop, customize & print — 100% offline
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg sm:text-xl font-bold text-foreground leading-tight">
-              Aadhaar Card Crop & Print
-            </h1>
-            <p className="text-xs text-muted-foreground hidden sm:block">
-              100% offline • No data uploaded • Browser-only processing
-            </p>
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/60 px-3 py-1.5 rounded-full">
+              <Shield className="h-3 w-3 text-accent" />
+              <span>Browser-only processing</span>
+            </div>
+            {isPreview && (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1.5">
+                  <Printer className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Print</span>
+                </Button>
+                <Button variant="default" size="sm" onClick={handleDownload} disabled={isGenerating} className="gap-1.5">
+                  <Download className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{isGenerating ? 'Generating...' : 'Download PDF'}</span>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Main */}
-      <main className="flex-1 container max-w-3xl mx-auto px-4 py-6 space-y-6">
-        {/* Steps - only show when idle */}
-        {state === 'idle' && !file && <StepsGuide />}
+      {/* Main Content */}
+      <main className="flex-1">
+        {!isPreview && state !== 'manual-crop' ? (
+          /* ===== SINGLE COLUMN: Upload / Password / Loading ===== */
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
+            {state === 'idle' && !file && <StepsGuide />}
 
-        {/* Upload */}
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-            {state === 'idle' ? '1. Upload Aadhaar PDF' : 'Uploaded File'}
-          </h2>
-          <FileUpload file={file} onFileSelect={handleFileSelect} onClear={handleReset} />
-        </section>
+            <section className="space-y-3">
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                {state === 'idle' ? 'Upload Aadhaar PDF' : 'Uploaded File'}
+              </h2>
+              <FileUpload file={file} onFileSelect={handleFileSelect} onClear={handleReset} />
+            </section>
 
-        {/* Checking */}
-        {state === 'checking' && (
-          <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-sm">Checking PDF...</span>
+            {state === 'checking' && (
+              <div className="flex items-center justify-center gap-2 py-10 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-sm">Checking PDF…</span>
+              </div>
+            )}
+
+            {state === 'needs-password' && (
+              <PasswordInput onSubmit={handlePasswordSubmit} isLoading={false} error={passwordError} />
+            )}
+
+            {state === 'processing' && (
+              <div className="flex flex-col items-center justify-center gap-3 py-16">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Processing your Aadhaar PDF…</p>
+              </div>
+            )}
+
+            {state === 'idle' && !file && (
+              <section className="glass-card rounded-xl p-5 space-y-3">
+                <h2 className="text-sm font-semibold text-foreground">How it works</h2>
+                <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
+                  <li>Upload your original Aadhaar letter PDF from UIDAI</li>
+                  <li>Enter the password (PIN code or DOB in DDMMYYYY)</li>
+                  <li>Auto-crops front & back of your Aadhaar card</li>
+                  <li>Adjust filters, layout, and download or print directly</li>
+                </ol>
+              </section>
+            )}
           </div>
-        )}
-
-        {/* Password */}
-        {state === 'needs-password' && (
-          <PasswordInput onSubmit={handlePasswordSubmit} isLoading={false} error={passwordError} />
-        )}
-
-        {/* Processing */}
-        {state === 'processing' && (
-          <div className="flex flex-col items-center justify-center gap-3 py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Processing your Aadhaar PDF...</p>
-          </div>
-        )}
-
-        {/* Preview */}
-        {state === 'preview' && result && (
-          <>
-            {/* Card Preview */}
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Card Preview
-              </h2>
-              <PreviewSection
-                frontImage={result.frontImage}
-                backImage={result.backImage}
-                onDownload={handleDownload}
-                onReset={handleReset}
-                isGenerating={isGenerating}
-                roundedCorners={roundedCorners}
-              />
-            </section>
-
-            {/* Options Panel (tabbed) */}
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Options
-              </h2>
-              <OptionsPanel
-                showBorder={showBorder}
-                onBorderToggle={setShowBorder}
-                roundedCorners={roundedCorners}
-                onRoundedToggle={handleRoundedToggle}
-                filters={filters}
-                onFiltersChange={handleFiltersChange}
-                layout={layout}
-                onLayoutChange={setLayout}
-                canManualCrop={!!result.fullPageCanvas}
-                onManualCrop={handleManualCrop}
-              />
-            </section>
-
-            {/* Live Print Preview */}
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Print Preview
-              </h2>
-              <PrintPreview
-                frontImage={result.frontImage}
-                backImage={result.backImage}
-                showBorder={showBorder}
-                roundedCorners={roundedCorners}
-                layout={layout}
-              />
-            </section>
-          </>
-        )}
-
-        {/* Manual Crop */}
-        {state === 'manual-crop' && result?.fullPageCanvas && (
-          <section className="space-y-3">
-            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-              Adjust Crop Region
-            </h2>
+        ) : state === 'manual-crop' && result?.fullPageCanvas ? (
+          /* ===== SINGLE COLUMN: Manual Crop ===== */
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-4">
             <ManualCropControls
               fullPageCanvas={result.fullPageCanvas}
               crop={crop}
@@ -274,29 +274,110 @@ const Index = () => {
               onApply={handleApplyCrop}
               onReset={handleResetCrop}
             />
-          </section>
-        )}
+          </div>
+        ) : isPreview ? (
+          /* ===== TWO COLUMN: Preview + Controls ===== */
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Left Column: Cards + Print Preview */}
+              <div className="lg:col-span-7 space-y-5">
+                {/* Card previews */}
+                <section className="glass-card rounded-xl p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                      Card Preview
+                    </h2>
+                    <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+                      <RotateCcw className="h-3 w-3" />
+                      Start Over
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Front</p>
+                      <div className={`overflow-hidden bg-card shadow-md ${roundedCorners ? 'rounded-xl' : 'rounded-sm'}`}>
+                        <img src={result.frontImage} alt="Aadhaar Front" className="w-full h-auto block" />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Back</p>
+                      <div className={`overflow-hidden bg-card shadow-md ${roundedCorners ? 'rounded-xl' : 'rounded-sm'}`}>
+                        <img src={result.backImage} alt="Aadhaar Back" className="w-full h-auto block" />
+                      </div>
+                    </div>
+                  </div>
 
-        {/* How it works */}
-        {state === 'idle' && !file && (
-          <section className="rounded-xl border border-border bg-card p-5 space-y-3">
-            <h2 className="text-sm font-semibold text-foreground">How it works</h2>
-            <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
-              <li>Upload your original Aadhaar letter PDF from UIDAI</li>
-              <li>Enter the password (PIN code or DOB in DDMMYYYY)</li>
-              <li>Auto-crops front & back of your Aadhaar card</li>
-              <li>Adjust filters, layout, and download print-ready PDF</li>
-            </ol>
-          </section>
-        )}
+                  {/* Action buttons */}
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
+                    <Button variant="success" size="sm" onClick={handleDownload} disabled={isGenerating} className="gap-1.5 flex-1 sm:flex-none">
+                      <Download className="h-4 w-4" />
+                      {isGenerating ? 'Generating…' : 'Download PDF'}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1.5 flex-1 sm:flex-none">
+                      <Printer className="h-4 w-4" />
+                      Print Directly
+                    </Button>
+                  </div>
+                </section>
+
+                {/* Live Print Preview */}
+                <section className="glass-card rounded-xl p-5 space-y-3">
+                  <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                    Print Preview
+                  </h2>
+                  <PrintPreview
+                    frontImage={result.frontImage}
+                    backImage={result.backImage}
+                    showBorder={showBorder}
+                    roundedCorners={roundedCorners}
+                    layout={layout}
+                  />
+                </section>
+              </div>
+
+              {/* Right Column: Options */}
+              <div className="lg:col-span-5">
+                <div className="lg:sticky lg:top-[72px] space-y-5">
+                  <section>
+                    <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+                      Options
+                    </h2>
+                    <OptionsPanel
+                      showBorder={showBorder}
+                      onBorderToggle={setShowBorder}
+                      roundedCorners={roundedCorners}
+                      onRoundedToggle={handleRoundedToggle}
+                      filters={filters}
+                      onFiltersChange={handleFiltersChange}
+                      layout={layout}
+                      onLayoutChange={setLayout}
+                      canManualCrop={!!result.fullPageCanvas}
+                      onManualCrop={handleManualCrop}
+                    />
+                  </section>
+
+                  {/* Uploaded file info */}
+                  {file && (
+                    <div className="glass-card rounded-xl p-4">
+                      <FileUpload file={file} onFileSelect={handleFileSelect} onClear={handleReset} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card/50 mt-auto">
-        <div className="container max-w-3xl mx-auto px-4 py-4 text-center">
-          <p className="text-xs text-muted-foreground">
-            <Shield className="h-3 w-3 inline-block mr-1 -mt-0.5" />
-            All processing happens in your browser. No data is uploaded to any server.
+      <footer className="border-t border-border/50 bg-card/40 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+            <Shield className="h-3 w-3 text-accent" />
+            All processing happens in your browser. No data is uploaded.
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            Built by <span className="font-semibold text-foreground">Lokesh Sharma</span>
           </p>
         </div>
       </footer>

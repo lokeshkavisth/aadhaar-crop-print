@@ -2,44 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 220 20% 10%;
+    --background: 220 25% 97%;
+    --foreground: 224 30% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
+    --card-foreground: 224 30% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
+    --popover-foreground: 224 30% 12%;
 
-    --primary: 220 70% 50%;
+    --primary: 235 65% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 93%;
-    --secondary-foreground: 220 20% 20%;
+    --secondary: 220 20% 93%;
+    --secondary-foreground: 224 25% 18%;
 
-    --muted: 210 15% 95%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 220 18% 94%;
+    --muted-foreground: 224 12% 48%;
 
-    --accent: 145 60% 42%;
+    --accent: 165 55% 40%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 20% 88%;
-    --input: 214 20% 88%;
-    --ring: 220 70% 50%;
+    --border: 220 18% 88%;
+    --input: 220 18% 88%;
+    --ring: 235 65% 55%;
 
-    --radius: 0.75rem;
+    --radius: 0.625rem;
 
-    --success: 145 60% 42%;
+    --success: 160 60% 38%;
     --success-foreground: 0 0% 100%;
+
+    --surface: 220 20% 99%;
+    --surface-foreground: 224 30% 12%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -52,14 +53,23 @@ All colors MUST be HSL.
   }
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 @layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border/60 shadow-sm;
   }
 }
