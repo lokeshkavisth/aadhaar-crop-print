@@ -50,14 +50,16 @@ const Index = () => {
     canvas: HTMLCanvasElement,
     cropRegion: CropRegion,
     rounded: boolean,
-    imgFilters: ImageFilters
+    imgFilters: ImageFilters,
+    outputSize?: { width: number; height: number }
   ) => {
+    const sz = outputSize ?? { width: cardSize.width, height: cardSize.height };
     setResult({
-      frontImage: cropFromCanvas(canvas, 'front', cropRegion, rounded, imgFilters),
-      backImage: cropFromCanvas(canvas, 'back', cropRegion, rounded, imgFilters),
+      frontImage: cropFromCanvas(canvas, 'front', cropRegion, rounded, imgFilters, sz),
+      backImage: cropFromCanvas(canvas, 'back', cropRegion, rounded, imgFilters, sz),
       fullPageCanvas: canvas,
     });
-  }, []);
+  }, [cardSize]);
 
   const handleFileSelect = useCallback(async (selectedFile: File) => {
     setFile(selectedFile);
