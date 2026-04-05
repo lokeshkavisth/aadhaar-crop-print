@@ -10,8 +10,8 @@ export interface PrintLayout {
 }
 
 export const DEFAULT_LAYOUT: PrintLayout = {
-  gap: 4,
-  marginTop: 15,
+  gap: 2,
+  marginTop: 10,
   marginLeft: 0,
   autoCenter: true,
 };
