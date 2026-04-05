@@ -17,10 +17,10 @@ export const DEFAULT_LAYOUT: PrintLayout = {
 };
 
 const PRESETS: { label: string; layout: PrintLayout }[] = [
-  { label: 'Top Center', layout: { gap: 4, marginTop: 15, marginLeft: 0, autoCenter: true } },
-  { label: 'Center Page', layout: { gap: 4, marginTop: 120, marginLeft: 0, autoCenter: true } },
-  { label: 'Top Left', layout: { gap: 4, marginTop: 15, marginLeft: 10, autoCenter: false } },
-  { label: 'Compact', layout: { gap: 1, marginTop: 5, marginLeft: 0, autoCenter: true } },
+  { label: 'Top Center', layout: { gap: 2, marginTop: 10, marginLeft: 0, autoCenter: true } },
+  { label: 'Center Page', layout: { gap: 2, marginTop: 120, marginLeft: 0, autoCenter: true } },
+  { label: 'Top Left', layout: { gap: 2, marginTop: 10, marginLeft: 10, autoCenter: false } },
+  { label: 'Compact', layout: { gap: 0, marginTop: 5, marginLeft: 0, autoCenter: true } },
 ];
 
 interface PrintLayoutControlsProps {
