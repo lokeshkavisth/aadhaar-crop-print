@@ -9,6 +9,7 @@ import { OptionsPanel } from '@/components/OptionsPanel';
 import { PrintPreview } from '@/components/PrintPreview';
 import { DEFAULT_LAYOUT, type PrintLayout } from '@/components/PrintLayoutControls';
 import { DEFAULT_FILTERS, type ImageFilters } from '@/components/ImageFilterControls';
+import { DEFAULT_CARD_SIZE, type CardOutputSize } from '@/components/CardSizeControls';
 import {
   checkIfPasswordProtected,
   loadPdf,
