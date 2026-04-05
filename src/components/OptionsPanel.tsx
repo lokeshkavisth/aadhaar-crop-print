@@ -87,11 +87,17 @@ export function OptionsPanel({
                 />
               </div>
             </div>
+
+            <div className="pt-1">
+              <CardSizeControls size={cardSize} onChange={onCardSizeChange} />
+            </div>
+
             {canManualCrop && (
               <Button variant="outline" size="sm" onClick={onManualCrop} className="w-full gap-2">
                 <Crop className="h-4 w-4" />
                 Adjust Crop Region
               </Button>
+            )}
             )}
           </TabsContent>
 
