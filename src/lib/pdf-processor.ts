@@ -16,12 +16,12 @@ export interface CropRegion {
 }
 
 export const DEFAULT_CROP: CropRegion = {
-  top: 72.42,
-  bottom: 97.21,
-  leftStart: 1.96,
+  top: 71.0,
+  bottom: 97.8,
+  leftStart: 1.2,
   leftEnd: 50,
   rightStart: 50,
-  rightEnd: 98.04,
+  rightEnd: 98.8,
 };
 
 export interface ProcessingResult {
