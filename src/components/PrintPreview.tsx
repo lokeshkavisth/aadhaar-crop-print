@@ -11,6 +11,7 @@ interface PrintPreviewProps {
 
 const A4_W = 210; // mm
 const A4_H = 297;
+const PREVIEW_H = 100; // mm – only show top portion of A4
 const CARD_W = 85.6;
 const CARD_H = 53.98;
 const CORNER_R = 3.18;
@@ -55,7 +56,7 @@ export function PrintPreview({
     const maxW = container.clientWidth;
     const scale = maxW / A4_W;
     const w = maxW;
-    const h = A4_H * scale;
+    const h = PREVIEW_H * scale;
 
     canvas.width = w * 2; // 2x for sharpness
     canvas.height = h * 2;
@@ -78,7 +79,7 @@ export function PrintPreview({
       ctx.lineTo(x * s, canvas.height);
       ctx.stroke();
     }
-    for (let y = 0; y <= A4_H; y += 10) {
+    for (let y = 0; y <= PREVIEW_H; y += 10) {
       ctx.beginPath();
       ctx.moveTo(0, y * s);
       ctx.lineTo(canvas.width, y * s);
@@ -154,7 +155,7 @@ export function PrintPreview({
     ctx.fillStyle = '#9ca3af';
     ctx.font = `${10 * (s / 2)}px Inter, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('A4 (210 × 297 mm)', canvas.width / 2, canvas.height - 8 * (s / 2));
+    ctx.fillText('A4 (210 × 297 mm)', canvas.width / 2, canvas.height - 6 * (s / 2));
 
     // Card dimension labels
     ctx.font = `${8 * (s / 2)}px Inter, sans-serif`;
