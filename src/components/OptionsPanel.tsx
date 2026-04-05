@@ -33,6 +33,8 @@ export function OptionsPanel({
   onLayoutChange,
   canManualCrop,
   onManualCrop,
+  cardSize,
+  onCardSizeChange,
 }: OptionsPanelProps) {
   return (
     <div className="glass-card rounded-xl overflow-hidden">
