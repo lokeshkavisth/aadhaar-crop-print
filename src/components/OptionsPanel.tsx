@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ImageFilterControls, type ImageFilters } from '@/components/ImageFilterControls';
 import { PrintLayoutControls, type PrintLayout } from '@/components/PrintLayoutControls';
+import { CardSizeControls, type CardOutputSize } from '@/components/CardSizeControls';
 
 interface OptionsPanelProps {
   showBorder: boolean;
@@ -17,6 +18,8 @@ interface OptionsPanelProps {
   onLayoutChange: (l: PrintLayout) => void;
   canManualCrop: boolean;
   onManualCrop: () => void;
+  cardSize: CardOutputSize;
+  onCardSizeChange: (s: CardOutputSize) => void;
 }
 
 export function OptionsPanel({
