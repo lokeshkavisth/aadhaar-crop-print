@@ -158,7 +158,8 @@ export function cropFromCanvas(
   side: 'front' | 'back',
   crop: CropRegion,
   roundedCorners: boolean = false,
-  filters: ImageFilters = DEFAULT_FILTERS
+  filters: ImageFilters = DEFAULT_FILTERS,
+  outputSize?: { width: number; height: number }
 ): string {
   const filtered = applyFilters(canvas, filters);
   const cropCanvas = document.createElement('canvas');
@@ -183,27 +184,30 @@ export function cropFromCanvas(
   
   const cropW = sxEnd - sx;
   const cropH = cardBottom - cardTop;
+
+  const outW = outputSize?.width ?? cropW;
+  const outH = outputSize?.height ?? cropH;
   
-  cropCanvas.width = cropW;
-  cropCanvas.height = cropH;
+  cropCanvas.width = outW;
+  cropCanvas.height = outH;
 
   if (roundedCorners) {
-    const radius = Math.floor(cropW * 0.037);
+    const radius = Math.floor(outW * 0.037);
     ctx.beginPath();
     ctx.moveTo(radius, 0);
-    ctx.lineTo(cropW - radius, 0);
-    ctx.quadraticCurveTo(cropW, 0, cropW, radius);
-    ctx.lineTo(cropW, cropH - radius);
-    ctx.quadraticCurveTo(cropW, cropH, cropW - radius, cropH);
-    ctx.lineTo(radius, cropH);
-    ctx.quadraticCurveTo(0, cropH, 0, cropH - radius);
+    ctx.lineTo(outW - radius, 0);
+    ctx.quadraticCurveTo(outW, 0, outW, radius);
+    ctx.lineTo(outW, outH - radius);
+    ctx.quadraticCurveTo(outW, outH, outW - radius, outH);
+    ctx.lineTo(radius, outH);
+    ctx.quadraticCurveTo(0, outH, 0, outH - radius);
     ctx.lineTo(0, radius);
     ctx.quadraticCurveTo(0, 0, radius, 0);
     ctx.closePath();
     ctx.clip();
   }
   
-  ctx.drawImage(filtered, sx, cardTop, cropW, cropH, 0, 0, cropW, cropH);
+  ctx.drawImage(filtered, sx, cardTop, cropW, cropH, 0, 0, outW, outH);
   
   return cropCanvas.toDataURL('image/png', 1.0);
 }

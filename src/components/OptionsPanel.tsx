@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ImageFilterControls, type ImageFilters } from '@/components/ImageFilterControls';
 import { PrintLayoutControls, type PrintLayout } from '@/components/PrintLayoutControls';
+import { CardSizeControls, type CardOutputSize } from '@/components/CardSizeControls';
 
 interface OptionsPanelProps {
   showBorder: boolean;
@@ -17,6 +18,8 @@ interface OptionsPanelProps {
   onLayoutChange: (l: PrintLayout) => void;
   canManualCrop: boolean;
   onManualCrop: () => void;
+  cardSize: CardOutputSize;
+  onCardSizeChange: (s: CardOutputSize) => void;
 }
 
 export function OptionsPanel({
@@ -30,6 +33,8 @@ export function OptionsPanel({
   onLayoutChange,
   canManualCrop,
   onManualCrop,
+  cardSize,
+  onCardSizeChange,
 }: OptionsPanelProps) {
   return (
     <div className="glass-card rounded-xl overflow-hidden">
@@ -82,6 +87,11 @@ export function OptionsPanel({
                 />
               </div>
             </div>
+
+            <div className="pt-1">
+              <CardSizeControls size={cardSize} onChange={onCardSizeChange} />
+            </div>
+
             {canManualCrop && (
               <Button variant="outline" size="sm" onClick={onManualCrop} className="w-full gap-2">
                 <Crop className="h-4 w-4" />

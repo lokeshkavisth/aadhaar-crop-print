@@ -9,6 +9,7 @@ import { OptionsPanel } from '@/components/OptionsPanel';
 import { PrintPreview } from '@/components/PrintPreview';
 import { DEFAULT_LAYOUT, type PrintLayout } from '@/components/PrintLayoutControls';
 import { DEFAULT_FILTERS, type ImageFilters } from '@/components/ImageFilterControls';
+import { DEFAULT_CARD_SIZE, type CardOutputSize } from '@/components/CardSizeControls';
 import {
   checkIfPasswordProtected,
   loadPdf,
@@ -34,6 +35,7 @@ const Index = () => {
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [layout, setLayout] = useState<PrintLayout>(DEFAULT_LAYOUT);
   const [filters, setFilters] = useState<ImageFilters>(DEFAULT_FILTERS);
+  const [cardSize, setCardSize] = useState<CardOutputSize>(DEFAULT_CARD_SIZE);
 
   const pdfOptions = {
     showBorder,
@@ -48,14 +50,16 @@ const Index = () => {
     canvas: HTMLCanvasElement,
     cropRegion: CropRegion,
     rounded: boolean,
-    imgFilters: ImageFilters
+    imgFilters: ImageFilters,
+    outputSize?: { width: number; height: number }
   ) => {
+    const sz = outputSize ?? { width: cardSize.width, height: cardSize.height };
     setResult({
-      frontImage: cropFromCanvas(canvas, 'front', cropRegion, rounded, imgFilters),
-      backImage: cropFromCanvas(canvas, 'back', cropRegion, rounded, imgFilters),
+      frontImage: cropFromCanvas(canvas, 'front', cropRegion, rounded, imgFilters, sz),
+      backImage: cropFromCanvas(canvas, 'back', cropRegion, rounded, imgFilters, sz),
       fullPageCanvas: canvas,
     });
-  }, []);
+  }, [cardSize]);
 
   const handleFileSelect = useCallback(async (selectedFile: File) => {
     setFile(selectedFile);
@@ -163,6 +167,7 @@ const Index = () => {
     setShowBorder(false);
     setLayout(DEFAULT_LAYOUT);
     setFilters(DEFAULT_FILTERS);
+    setCardSize(DEFAULT_CARD_SIZE);
   }, []);
 
   const handleManualCrop = useCallback(() => {
@@ -353,6 +358,13 @@ const Index = () => {
                       onLayoutChange={setLayout}
                       canManualCrop={!!result.fullPageCanvas}
                       onManualCrop={handleManualCrop}
+                      cardSize={cardSize}
+                      onCardSizeChange={(s) => {
+                        setCardSize(s);
+                        if (result?.fullPageCanvas) {
+                          reprocessWithOptions(result.fullPageCanvas, crop, roundedCorners, filters, { width: s.width, height: s.height });
+                        }
+                      }}
                     />
                   </section>
 
