@@ -98,7 +98,6 @@ export function OptionsPanel({
                 Adjust Crop Region
               </Button>
             )}
-            )}
           </TabsContent>
 
           <TabsContent value="filters" className="mt-0">
