@@ -357,6 +357,13 @@ const Index = () => {
                       onLayoutChange={setLayout}
                       canManualCrop={!!result.fullPageCanvas}
                       onManualCrop={handleManualCrop}
+                      cardSize={cardSize}
+                      onCardSizeChange={(s) => {
+                        setCardSize(s);
+                        if (result?.fullPageCanvas) {
+                          reprocessWithOptions(result.fullPageCanvas, crop, roundedCorners, filters, { width: s.width, height: s.height });
+                        }
+                      }}
                     />
                   </section>
 
