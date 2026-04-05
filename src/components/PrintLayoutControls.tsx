@@ -10,16 +10,16 @@ export interface PrintLayout {
 }
 
 export const DEFAULT_LAYOUT: PrintLayout = {
-  gap: 2,
-  marginTop: 10,
-  marginLeft: 0,
+  gap: 6,
+  marginTop: 6,
+  marginLeft: 6,
   autoCenter: true,
 };
 
 const PRESETS: { label: string; layout: PrintLayout }[] = [
-  { label: 'Top Center', layout: { gap: 2, marginTop: 10, marginLeft: 0, autoCenter: true } },
-  { label: 'Center Page', layout: { gap: 2, marginTop: 120, marginLeft: 0, autoCenter: true } },
-  { label: 'Top Left', layout: { gap: 2, marginTop: 10, marginLeft: 10, autoCenter: false } },
+  { label: 'Top Center', layout: { gap: 6, marginTop: 6, marginLeft: 6, autoCenter: true } },
+  { label: 'Center Page', layout: { gap: 6, marginTop: 120, marginLeft: 6, autoCenter: true } },
+  { label: 'Top Left', layout: { gap: 6, marginTop: 6, marginLeft: 6, autoCenter: false } },
   { label: 'Compact', layout: { gap: 0, marginTop: 5, marginLeft: 0, autoCenter: true } },
 ];
 
