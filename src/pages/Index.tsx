@@ -167,6 +167,7 @@ const Index = () => {
     setShowBorder(false);
     setLayout(DEFAULT_LAYOUT);
     setFilters(DEFAULT_FILTERS);
+    setCardSize(DEFAULT_CARD_SIZE);
   }, []);
 
   const handleManualCrop = useCallback(() => {
