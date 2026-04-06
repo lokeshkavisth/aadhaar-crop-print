@@ -37,6 +37,7 @@ const Index = () => {
   const [layout, setLayout] = useState<PrintLayout>(DEFAULT_LAYOUT);
   const [filters, setFilters] = useState<ImageFilters>(DEFAULT_FILTERS);
   const [cardSize, setCardSize] = useState<CardOutputSize>(DEFAULT_CARD_SIZE);
+  const [previewZoom, setPreviewZoom] = useState(100);
 
   const pdfOptions = {
     showBorder,
