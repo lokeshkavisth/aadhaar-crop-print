@@ -170,6 +170,7 @@ const Index = () => {
     setLayout(DEFAULT_LAYOUT);
     setFilters(DEFAULT_FILTERS);
     setCardSize(DEFAULT_CARD_SIZE);
+    setPreviewZoom(100);
   }, []);
 
   const handleManualCrop = useCallback(() => {
