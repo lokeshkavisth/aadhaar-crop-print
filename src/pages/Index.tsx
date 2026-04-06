@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { Shield, Loader2, Download, Printer, RotateCcw, Fingerprint } from 'lucide-react';
+import { Shield, Loader2, Download, Printer, RotateCcw, Fingerprint, ZoomIn, ZoomOut } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/FileUpload';
 import { PasswordInput } from '@/components/PasswordInput';
