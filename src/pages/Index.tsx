@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { Shield, Loader2, Download, Printer, RotateCcw, Fingerprint } from 'lucide-react';
+import { Shield, Loader2, Download, Printer, RotateCcw, Fingerprint, ZoomIn, ZoomOut } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/FileUpload';
 import { PasswordInput } from '@/components/PasswordInput';
@@ -36,6 +37,7 @@ const Index = () => {
   const [layout, setLayout] = useState<PrintLayout>(DEFAULT_LAYOUT);
   const [filters, setFilters] = useState<ImageFilters>(DEFAULT_FILTERS);
   const [cardSize, setCardSize] = useState<CardOutputSize>(DEFAULT_CARD_SIZE);
+  const [previewZoom, setPreviewZoom] = useState(100);
 
   const pdfOptions = {
     showBorder,
@@ -168,6 +170,7 @@ const Index = () => {
     setLayout(DEFAULT_LAYOUT);
     setFilters(DEFAULT_FILTERS);
     setCardSize(DEFAULT_CARD_SIZE);
+    setPreviewZoom(100);
   }, []);
 
   const handleManualCrop = useCallback(() => {
@@ -297,17 +300,45 @@ const Index = () => {
                       Start Over
                     </Button>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Front</p>
-                      <div className={`overflow-hidden bg-card shadow-md ${roundedCorners ? 'rounded-xl' : 'rounded-sm'}`}>
-                        <img src={result.frontImage} alt="Aadhaar Front" className="w-full h-auto block" />
+
+                  {/* Zoom control */}
+                  <div className="flex items-center gap-3">
+                    <ZoomOut className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                    <Slider
+                      value={[previewZoom]}
+                      min={50}
+                      max={200}
+                      step={5}
+                      onValueChange={(v) => setPreviewZoom(v[0])}
+                      className="flex-1"
+                    />
+                    <ZoomIn className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                    <button
+                      onClick={() => setPreviewZoom(100)}
+                      className="text-[11px] font-medium text-muted-foreground hover:text-foreground tabular-nums min-w-[40px] text-right"
+                    >
+                      {previewZoom}%
+                    </button>
+                  </div>
+
+                  <div className="overflow-auto max-h-[500px] rounded-lg border border-border/40 bg-muted/20 p-3">
+                    <div
+                      className="grid grid-cols-2 gap-3 origin-top-left transition-transform duration-150"
+                      style={{
+                        width: `${previewZoom}%`,
+                      }}
+                    >
+                      <div className="space-y-1.5">
+                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Front</p>
+                        <div className={`overflow-hidden bg-card shadow-md ${roundedCorners ? 'rounded-xl' : 'rounded-sm'}`}>
+                          <img src={result.frontImage} alt="Aadhaar Front" className="w-full h-auto block" />
+                        </div>
                       </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Back</p>
-                      <div className={`overflow-hidden bg-card shadow-md ${roundedCorners ? 'rounded-xl' : 'rounded-sm'}`}>
-                        <img src={result.backImage} alt="Aadhaar Back" className="w-full h-auto block" />
+                      <div className="space-y-1.5">
+                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Back</p>
+                        <div className={`overflow-hidden bg-card shadow-md ${roundedCorners ? 'rounded-xl' : 'rounded-sm'}`}>
+                          <img src={result.backImage} alt="Aadhaar Back" className="w-full h-auto block" />
+                        </div>
                       </div>
                     </div>
                   </div>
