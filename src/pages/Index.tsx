@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Shield, Loader2, Download, Printer, RotateCcw, Fingerprint, ZoomIn, ZoomOut } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
+import { Shield, Loader2, Download, Printer, RotateCcw, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/FileUpload';
 import { PasswordInput } from '@/components/PasswordInput';
@@ -37,7 +36,6 @@ const Index = () => {
   const [layout, setLayout] = useState<PrintLayout>(DEFAULT_LAYOUT);
   const [filters, setFilters] = useState<ImageFilters>(DEFAULT_FILTERS);
   const [cardSize, setCardSize] = useState<CardOutputSize>(DEFAULT_CARD_SIZE);
-  const [previewZoom, setPreviewZoom] = useState(100);
 
   const pdfOptions = {
     showBorder,
@@ -170,7 +168,7 @@ const Index = () => {
     setLayout(DEFAULT_LAYOUT);
     setFilters(DEFAULT_FILTERS);
     setCardSize(DEFAULT_CARD_SIZE);
-    setPreviewZoom(100);
+    
   }, []);
 
   const handleManualCrop = useCallback(() => {
@@ -212,18 +210,6 @@ const Index = () => {
               <Shield className="h-3 w-3 text-accent" />
               <span className="font-medium">Browser-only</span>
             </div>
-            {isPreview && (
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1.5">
-                  <Printer className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Print</span>
-                </Button>
-                <Button variant="default" size="sm" onClick={handleDownload} disabled={isGenerating} className="gap-1.5">
-                  <Download className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{isGenerating ? 'Generating...' : 'Download PDF'}</span>
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </header>
@@ -289,11 +275,10 @@ const Index = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Left Column: Preview + Print Preview */}
               <div className="lg:col-span-7 space-y-5">
-                {/* Card previews */}
                 <section className="glass-card rounded-xl p-5 space-y-4">
                   <div className="flex items-center justify-between">
                     <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                      Card Preview
+                      Preview
                     </h2>
                     <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1.5 text-xs text-muted-foreground hover:text-foreground">
                       <RotateCcw className="h-3 w-3" />
@@ -301,47 +286,29 @@ const Index = () => {
                     </Button>
                   </div>
 
-                  {/* Zoom control */}
-                  <div className="flex items-center gap-3">
-                    <ZoomOut className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                    <Slider
-                      value={[previewZoom]}
-                      min={50}
-                      max={200}
-                      step={5}
-                      onValueChange={(v) => setPreviewZoom(v[0])}
-                      className="flex-1"
-                    />
-                    <ZoomIn className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                    <button
-                      onClick={() => setPreviewZoom(100)}
-                      className="text-[11px] font-medium text-muted-foreground hover:text-foreground tabular-nums min-w-[40px] text-right"
-                    >
-                      {previewZoom}%
-                    </button>
-                  </div>
-
-                  <div className="overflow-auto max-h-[500px] rounded-lg border border-border/40 bg-muted/20 p-3">
-                    <div
-                      className="grid grid-cols-2 gap-3 origin-top-left transition-transform duration-150"
-                      style={{ width: `${previewZoom}%` }}
-                    >
-                      <div className="space-y-1.5">
-                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Front</p>
-                        <div className={`overflow-hidden bg-card shadow-md ${roundedCorners ? 'rounded-xl' : 'rounded-sm'}`}>
-                          <img src={result.frontImage} alt="Aadhaar Front" className="w-full h-auto block" />
-                        </div>
+                  <div className="grid grid-cols-2 gap-3 rounded-lg border border-border/40 bg-muted/20 p-3">
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Front</p>
+                      <div className={`overflow-hidden bg-card shadow-md ${roundedCorners ? 'rounded-xl' : 'rounded-sm'}`}>
+                        <img src={result.frontImage} alt="Aadhaar Front" className="w-full h-auto block" />
                       </div>
-                      <div className="space-y-1.5">
-                        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Back</p>
-                        <div className={`overflow-hidden bg-card shadow-md ${roundedCorners ? 'rounded-xl' : 'rounded-sm'}`}>
-                          <img src={result.backImage} alt="Aadhaar Back" className="w-full h-auto block" />
-                        </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Back</p>
+                      <div className={`overflow-hidden bg-card shadow-md ${roundedCorners ? 'rounded-xl' : 'rounded-sm'}`}>
+                        <img src={result.backImage} alt="Aadhaar Back" className="w-full h-auto block" />
                       </div>
                     </div>
                   </div>
 
-                  {/* Action buttons */}
+                  <PrintPreview
+                    frontImage={result.frontImage}
+                    backImage={result.backImage}
+                    showBorder={showBorder}
+                    roundedCorners={roundedCorners}
+                    layout={layout}
+                  />
+
                   <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
                     <Button variant="success" size="sm" onClick={handleDownload} disabled={isGenerating} className="gap-1.5 flex-1 sm:flex-none">
                       <Download className="h-4 w-4" />
@@ -352,20 +319,6 @@ const Index = () => {
                       Print Directly
                     </Button>
                   </div>
-                </section>
-
-                {/* Live Print Preview */}
-                <section className="glass-card rounded-xl p-5 space-y-3">
-                  <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                    Print Preview
-                  </h2>
-                  <PrintPreview
-                    frontImage={result.frontImage}
-                    backImage={result.backImage}
-                    showBorder={showBorder}
-                    roundedCorners={roundedCorners}
-                    layout={layout}
-                  />
                 </section>
               </div>
 

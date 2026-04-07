@@ -1,11 +1,13 @@
-import { Settings2, Palette, Layout, Crop } from 'lucide-react';
+import { Settings2, Palette, Layout, Crop, ChevronDown } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ImageFilterControls, type ImageFilters } from '@/components/ImageFilterControls';
-import { PrintLayoutControls, type PrintLayout } from '@/components/PrintLayoutControls';
+import { type PrintLayout } from '@/components/PrintLayoutControls';
 import { CardSizeControls, type CardOutputSize } from '@/components/CardSizeControls';
+import { useState } from 'react';
 
 interface OptionsPanelProps {
   showBorder: boolean;
@@ -22,6 +24,36 @@ interface OptionsPanelProps {
   onCardSizeChange: (s: CardOutputSize) => void;
 }
 
+function SectionCollapsible({
+  icon: Icon,
+  title,
+  defaultOpen = false,
+  children,
+}: {
+  icon: React.ElementType;
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="border border-border/50 rounded-lg overflow-hidden">
+      <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors text-left">
+        <div className="flex items-center gap-2">
+          <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">{title}</span>
+        </div>
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="p-4 space-y-4">
+          {children}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 export function OptionsPanel({
   showBorder,
   onBorderToggle,
@@ -36,79 +68,110 @@ export function OptionsPanel({
   cardSize,
   onCardSizeChange,
 }: OptionsPanelProps) {
+  const updateLayout = (key: keyof PrintLayout, value: number | boolean) => {
+    onLayoutChange({ ...layout, [key]: value });
+  };
+
   return (
-    <div className="glass-card rounded-xl overflow-hidden">
-      <Tabs defaultValue="general" className="w-full">
-        <TabsList className="w-full rounded-none border-b border-border/50 bg-muted/30 h-auto p-0">
-          <TabsTrigger
-            value="general"
-            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 text-xs gap-1.5 font-medium"
-          >
-            <Settings2 className="h-3.5 w-3.5" />
-            General
-          </TabsTrigger>
-          <TabsTrigger
-            value="filters"
-            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 text-xs gap-1.5 font-medium"
-          >
-            <Palette className="h-3.5 w-3.5" />
-            Filters
-          </TabsTrigger>
-          <TabsTrigger
-            value="layout"
-            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 text-xs gap-1.5 font-medium"
-          >
-            <Layout className="h-3.5 w-3.5" />
-            Layout
-          </TabsTrigger>
-        </TabsList>
-
-        <div className="p-4">
-          <TabsContent value="general" className="mt-0 space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
-                <Label htmlFor="rounded-opt" className="text-sm text-foreground cursor-pointer">
-                  Rounded corners
-                </Label>
-                <Switch
-                  id="rounded-opt"
-                  checked={roundedCorners}
-                  onCheckedChange={onRoundedToggle}
-                />
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
-                <Label htmlFor="border-opt" className="text-sm text-foreground cursor-pointer">
-                  Cut border in PDF
-                </Label>
-                <Switch
-                  id="border-opt"
-                  checked={showBorder}
-                  onCheckedChange={onBorderToggle}
-                />
-              </div>
-            </div>
-
-            <div className="pt-1">
-              <CardSizeControls size={cardSize} onChange={onCardSizeChange} />
-            </div>
-
-            {canManualCrop && (
-              <Button variant="outline" size="sm" onClick={onManualCrop} className="w-full gap-2">
-                <Crop className="h-4 w-4" />
-                Adjust Crop Region
-              </Button>
-            )}
-          </TabsContent>
-
-          <TabsContent value="filters" className="mt-0">
-            <ImageFilterControls filters={filters} onChange={onFiltersChange} />
-          </TabsContent>
-
-          <TabsContent value="layout" className="mt-0">
-            <PrintLayoutControls layout={layout} onChange={onLayoutChange} />
-          </TabsContent>
+    <div className="space-y-3">
+      {/* General */}
+      <SectionCollapsible icon={Settings2} title="General" defaultOpen>
+        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
+          <Label htmlFor="rounded-opt" className="text-sm text-foreground cursor-pointer">
+            Rounded corners
+          </Label>
+          <Switch id="rounded-opt" checked={roundedCorners} onCheckedChange={onRoundedToggle} />
         </div>
-      </Tabs>
+        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
+          <Label htmlFor="border-opt" className="text-sm text-foreground cursor-pointer">
+            Cut border in PDF
+          </Label>
+          <Switch id="border-opt" checked={showBorder} onCheckedChange={onBorderToggle} />
+        </div>
+        <CardSizeControls size={cardSize} onChange={onCardSizeChange} />
+        {canManualCrop && (
+          <Button variant="outline" size="sm" onClick={onManualCrop} className="w-full gap-2">
+            <Crop className="h-4 w-4" />
+            Adjust Crop Region
+          </Button>
+        )}
+      </SectionCollapsible>
+
+      {/* Filters */}
+      <SectionCollapsible icon={Palette} title="Filters">
+        <ImageFilterControls filters={filters} onChange={onFiltersChange} />
+      </SectionCollapsible>
+
+      {/* Layout */}
+      <SectionCollapsible icon={Layout} title="Print Layout">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: 'Top Center', l: { gap: 4, marginTop: 6, marginLeft: 6, autoCenter: true } },
+            { label: 'Center Page', l: { gap: 6, marginTop: 120, marginLeft: 6, autoCenter: true } },
+            { label: 'Top Left', l: { gap: 6, marginTop: 6, marginLeft: 6, autoCenter: false } },
+            { label: 'Compact', l: { gap: 0, marginTop: 5, marginLeft: 0, autoCenter: true } },
+          ].map((p) => (
+            <Button key={p.label} variant="outline" size="sm" className="text-xs" onClick={() => onLayoutChange(p.l)}>
+              {p.label}
+            </Button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Card Gap (mm)</Label>
+            <Input
+              type="number"
+              min={0}
+              max={20}
+              step={0.5}
+              value={layout.gap}
+              onChange={(e) => updateLayout('gap', parseFloat(e.target.value) || 0)}
+              className="h-9"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Top Margin (mm)</Label>
+            <Input
+              type="number"
+              min={2}
+              max={200}
+              step={1}
+              value={layout.marginTop}
+              onChange={(e) => updateLayout('marginTop', parseFloat(e.target.value) || 2)}
+              className="h-9"
+            />
+          </div>
+        </div>
+
+        {!layout.autoCenter && (
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Left Margin (mm)</Label>
+            <Input
+              type="number"
+              min={2}
+              max={100}
+              step={1}
+              value={layout.marginLeft}
+              onChange={(e) => updateLayout('marginLeft', parseFloat(e.target.value) || 2)}
+              className="h-9"
+            />
+          </div>
+        )}
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="auto-center"
+            checked={layout.autoCenter}
+            onChange={(e) => updateLayout('autoCenter', e.target.checked)}
+            className="h-4 w-4 rounded border-input text-primary accent-primary"
+          />
+          <Label htmlFor="auto-center" className="text-xs text-muted-foreground cursor-pointer">
+            Auto-center horizontally
+          </Label>
+        </div>
+      </SectionCollapsible>
     </div>
   );
 }
