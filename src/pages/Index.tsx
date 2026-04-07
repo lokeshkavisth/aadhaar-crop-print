@@ -210,18 +210,6 @@ const Index = () => {
               <Shield className="h-3 w-3 text-accent" />
               <span className="font-medium">Browser-only</span>
             </div>
-            {isPreview && (
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1.5">
-                  <Printer className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Print</span>
-                </Button>
-                <Button variant="default" size="sm" onClick={handleDownload} disabled={isGenerating} className="gap-1.5">
-                  <Download className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{isGenerating ? 'Generating...' : 'Download PDF'}</span>
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </header>
