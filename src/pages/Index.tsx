@@ -192,11 +192,11 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-border/60 bg-card/70 backdrop-blur-xl sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+      <header className="border-b border-border/60 bg-card/80 backdrop-blur-xl sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Fingerprint className="h-5 w-5 text-primary" />
+            <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shadow-md shadow-primary/20">
+              <Fingerprint className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
               <h1 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
@@ -208,9 +208,9 @@ const Index = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/60 px-3 py-1.5 rounded-full">
+            <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground bg-accent/10 px-3 py-1.5 rounded-full border border-accent/20">
               <Shield className="h-3 w-3 text-accent" />
-              <span>Browser-only processing</span>
+              <span className="font-medium">Browser-only</span>
             </div>
             {isPreview && (
               <div className="flex items-center gap-2">
@@ -284,10 +284,10 @@ const Index = () => {
             />
           </div>
         ) : isPreview ? (
-          /* ===== TWO COLUMN: Preview + Controls ===== */
+          /* ===== TWO COLUMN: Preview (left) + Controls (right) ===== */
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Left Column: Cards + Print Preview */}
+              {/* Left Column: Preview + Print Preview */}
               <div className="lg:col-span-7 space-y-5">
                 {/* Card previews */}
                 <section className="glass-card rounded-xl p-5 space-y-4">
@@ -324,9 +324,7 @@ const Index = () => {
                   <div className="overflow-auto max-h-[500px] rounded-lg border border-border/40 bg-muted/20 p-3">
                     <div
                       className="grid grid-cols-2 gap-3 origin-top-left transition-transform duration-150"
-                      style={{
-                        width: `${previewZoom}%`,
-                      }}
+                      style={{ width: `${previewZoom}%` }}
                     >
                       <div className="space-y-1.5">
                         <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Front</p>
@@ -371,7 +369,7 @@ const Index = () => {
                 </section>
               </div>
 
-              {/* Right Column: Options */}
+              {/* Right Column: All Controls */}
               <div className="lg:col-span-5">
                 <div className="lg:sticky lg:top-[72px] space-y-5">
                   <section>
