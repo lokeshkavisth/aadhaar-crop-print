@@ -251,7 +251,7 @@ const Index = () => {
                 <h2 className="text-sm font-semibold text-foreground">How it works</h2>
                 <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
                   <li>Upload your original Aadhaar letter PDF from UIDAI</li>
-                  <li>Enter the password (PIN code or DOB in DDMMYYYY)</li>
+                  <li>Enter the password (first 4 letters of name in CAPS + DOB in YYYY)</li>
                   <li>Auto-crops front & back of your Aadhaar card</li>
                   <li>Adjust filters, layout, and download or print directly</li>
                 </ol>
