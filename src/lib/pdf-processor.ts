@@ -275,8 +275,8 @@ export function generatePrintPdf(
     compress: false,
   });
   
-  const cardW = 85.6;
-  const cardH = 53.98;
+  const cardW = 94.16;
+  const cardH = 59.38;
   const cornerR = 3.18;
   
   const pageW = 210;
