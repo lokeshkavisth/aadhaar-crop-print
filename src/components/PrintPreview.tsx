@@ -12,9 +12,9 @@ interface PrintPreviewProps {
 const A4_W = 210; // mm
 const A4_H = 297;
 const PREVIEW_H = 100; // mm – only show top portion of A4
-const CARD_W = 85.6;
-const CARD_H = 53.98;
-const CORNER_R = 3.18;
+const CARD_W = 90.6;
+const CARD_H = 58.98;
+const CORNER_R = 3.37;
 const RULER_SIZE = 14; // px at 1x – ruler gutter width
 
 export function PrintPreview({
@@ -231,8 +231,8 @@ export function PrintPreview({
     const frontCx = rulerPx + (startX + CARD_W / 2) * s;
     const backCx = rulerPx + (startX + CARD_W + gap + CARD_W / 2) * s;
     const labelY = rulerPx + (y + CARD_H + 3) * s;
-    ctx.fillText('Front — 85.6 × 54 mm', frontCx, labelY);
-    ctx.fillText('Back — 85.6 × 54 mm', backCx, labelY);
+    ctx.fillText('Front — 90.6 × 59 mm', frontCx, labelY);
+    ctx.fillText('Back — 90.6 × 59 mm', backCx, labelY);
 
     // Paper border
     ctx.strokeStyle = '#d1d5db';
