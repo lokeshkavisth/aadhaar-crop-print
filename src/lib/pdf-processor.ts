@@ -277,7 +277,7 @@ export function generatePrintPdf(
   
   const cardW = 90.6;
   const cardH = 58.98;
-  const cornerR = 3.18;
+  const cornerR = 3.37;
   
   const pageW = 210;
   const gap = options.gap;
