@@ -52,11 +52,52 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  .dark {
+    --background: 224 32% 7%;
+    --foreground: 220 14% 96%;
+
+    --card: 224 28% 11%;
+    --card-foreground: 220 14% 96%;
+
+    --popover: 224 28% 11%;
+    --popover-foreground: 220 14% 96%;
+
+    --primary: 220 90% 64%;
+    --primary-foreground: 224 32% 7%;
+    --primary-glow: 230 95% 70%;
+
+    --secondary: 224 22% 16%;
+    --secondary-foreground: 220 14% 96%;
+
+    --muted: 224 22% 14%;
+    --muted-foreground: 220 10% 64%;
+
+    --accent: 162 70% 48%;
+    --accent-foreground: 224 32% 7%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 224 20% 20%;
+    --input: 224 20% 20%;
+    --ring: 220 90% 64%;
+
+    --success: 160 60% 48%;
+    --success-foreground: 224 32% 7%;
+
+    --surface: 224 28% 13%;
+    --surface-foreground: 220 14% 96%;
+  }
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html {
+    @apply transition-colors duration-200;
   }
 
   body {
@@ -71,10 +112,19 @@
 
 @layer utilities {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-sm;
+    @apply bg-card/80 backdrop-blur-xl border border-border/60 shadow-sm;
+  }
+
+  .surface-card {
+    @apply bg-card border border-border/60 rounded-xl;
   }
 
   .gradient-primary {
     background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+  }
+
+  .num-input {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
   }
 }
