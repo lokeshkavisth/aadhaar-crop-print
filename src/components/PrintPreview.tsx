@@ -12,8 +12,8 @@ interface PrintPreviewProps {
 const A4_W = 210; // mm
 const A4_H = 297;
 const PREVIEW_H = 100; // mm – only show top portion of A4
-const CARD_W = 85.6;
-const CARD_H = 53.98;
+const CARD_W = 90.6;
+const CARD_H = 58.98;
 const CORNER_R = 3.18;
 const RULER_SIZE = 14; // px at 1x – ruler gutter width
 
