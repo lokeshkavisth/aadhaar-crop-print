@@ -61,12 +61,16 @@ const Index = () => {
     outputSize?: { width: number; height: number }
   ) => {
     const sz = outputSize ?? { width: cardSize.width, height: cardSize.height };
+    const isAadhaar = docType === 'aadhaar';
     setResult({
+      docType,
       frontImage: cropFromCanvas(canvas, 'front', cropRegion, rounded, imgFilters, sz),
-      backImage: cropFromCanvas(canvas, 'back', cropRegion, rounded, imgFilters, sz),
+      backImage: isAadhaar
+        ? cropFromCanvas(canvas, 'back', cropRegion, rounded, imgFilters, sz)
+        : undefined,
       fullPageCanvas: canvas,
     });
-  }, [cardSize]);
+  }, [cardSize, docType]);
 
   const handleFileSelect = useCallback(async (selectedFile: File) => {
     setFile(selectedFile);
