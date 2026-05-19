@@ -31,13 +31,13 @@ const Index = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [result, setResult] = useState<ProcessingResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showBorder, setShowBorder] = useState(false);
-  const [roundedCorners, setRoundedCorners] = useState(false);
+  const [showBorder, setShowBorder] = usePersistedState<boolean>('aadhaar.showBorder', false);
+  const [roundedCorners, setRoundedCorners] = usePersistedState<boolean>('aadhaar.roundedCorners', false);
   const [crop, setCrop] = useState<CropRegion>(DEFAULT_CROP);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
-  const [layout, setLayout] = useState<PrintLayout>(DEFAULT_LAYOUT);
-  const [filters, setFilters] = useState<ImageFilters>(DEFAULT_FILTERS);
-  const [cardSize, setCardSize] = useState<CardOutputSize>(DEFAULT_CARD_SIZE);
+  const [layout, setLayout] = usePersistedState<PrintLayout>('aadhaar.layout', DEFAULT_LAYOUT);
+  const [filters, setFilters] = usePersistedState<ImageFilters>('aadhaar.filters', DEFAULT_FILTERS);
+  const [cardSize, setCardSize] = usePersistedState<CardOutputSize>('aadhaar.cardSize', DEFAULT_CARD_SIZE);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const pdfOptions = {
