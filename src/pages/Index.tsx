@@ -317,9 +317,14 @@ const Index = () => {
 
             <section className="space-y-3">
               <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                {state === 'idle' ? 'Upload Aadhaar PDF' : 'Uploaded File'}
+                {state === 'idle' ? 'Upload your ID PDF (Aadhaar · PAN · Jan Aadhaar)' : 'Uploaded file'}
               </h2>
               <FileUpload file={file} onFileSelect={handleFileSelect} onClear={handleReset} />
+              {state === 'idle' && !file && (
+                <p className="text-[11px] text-muted-foreground">
+                  Document type is auto-detected from the PDF contents.
+                </p>
+              )}
             </section>
 
             {state === 'checking' && (
@@ -330,13 +335,19 @@ const Index = () => {
             )}
 
             {state === 'needs-password' && (
-              <PasswordInput onSubmit={handlePasswordSubmit} isLoading={false} error={passwordError} />
+              <PasswordInput
+                onSubmit={handlePasswordSubmit}
+                isLoading={false}
+                error={passwordError}
+                docLabel={DOC_META[docType].label}
+                passwordHint={DOC_META[docType].passwordHint}
+              />
             )}
 
             {state === 'processing' && (
               <div className="flex flex-col items-center justify-center gap-3 py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Processing your Aadhaar PDF…</p>
+                <p className="text-sm text-muted-foreground">Processing your PDF…</p>
               </div>
             )}
 
@@ -344,9 +355,16 @@ const Index = () => {
               <section className="surface-card p-5 space-y-3">
                 <h2 className="text-sm font-semibold text-foreground">How it works</h2>
                 <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
-                  <li>Upload your original Aadhaar letter PDF from UIDAI</li>
-                  <li>Enter the password (first 4 letters of name in CAPS + DOB in YYYY)</li>
-                  <li>Auto-crops front & back of your Aadhaar card</li>
+                  <li>Upload your Aadhaar, PAN or Jan Aadhaar PDF — type is auto-detected</li>
+                  <li>
+                    Enter the password if asked
+                    <span className="block ml-5 mt-0.5 text-xs">
+                      · <b>Aadhaar</b>: first 4 letters of name in CAPS + DOB year (YYYY)
+                      <br />· <b>PAN</b>: Date of Birth in DDMMYYYY
+                      <br />· <b>Jan Aadhaar</b>: usually none
+                    </span>
+                  </li>
+                  <li>Auto-crops your card (front & back for Aadhaar, single card for PAN / Jan Aadhaar)</li>
                   <li>Adjust filters, layout, and download or print directly</li>
                 </ol>
               </section>
