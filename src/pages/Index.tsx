@@ -244,8 +244,13 @@ const Index = () => {
               <Fingerprint className="h-4 w-4 text-primary-foreground" />
             </div>
             <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
-              Aadhaar Card Cutter
+              IDSeva Crop
             </h1>
+            {file && (
+              <span className="hidden md:inline-flex text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                {DOC_META[docType].label}
+              </span>
+            )}
           </div>
 
           {/* File chip (center) */}
