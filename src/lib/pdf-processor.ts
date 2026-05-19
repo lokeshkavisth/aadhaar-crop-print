@@ -6,6 +6,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
 
 const RENDER_SCALE = 5; // 500 DPI for maximum quality
 
+import type { DocType } from './doc-detector';
+
 export interface CropRegion {
   top: number;
   bottom: number;
@@ -24,9 +26,25 @@ export const DEFAULT_CROP: CropRegion = {
   rightEnd: 93.3,
 };
 
+/** Single-card crop defaults — used for PAN and Jan Aadhaar (one card per page). */
+export const DEFAULT_SINGLE_CROP: CropRegion = {
+  top: 4,
+  bottom: 96,
+  leftStart: 4,
+  leftEnd: 96,
+  rightStart: 0,
+  rightEnd: 0,
+};
+
+export function defaultCropFor(docType: DocType): CropRegion {
+  return docType === 'aadhaar' ? DEFAULT_CROP : DEFAULT_SINGLE_CROP;
+}
+
 export interface ProcessingResult {
+  docType: DocType;
   frontImage: string;
-  backImage: string;
+  /** Undefined for single-card docs (PAN, Jan Aadhaar). */
+  backImage?: string;
   fullPageCanvas: HTMLCanvasElement | null;
 }
 
