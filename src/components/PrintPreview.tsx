@@ -3,7 +3,7 @@ import type { PrintLayout } from '@/components/PrintLayoutControls';
 
 interface PrintPreviewProps {
   frontImage: string;
-  backImage: string;
+  backImage?: string;
   showBorder: boolean;
   roundedCorners: boolean;
   layout: PrintLayout;
