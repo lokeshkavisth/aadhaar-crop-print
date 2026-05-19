@@ -3,7 +3,7 @@ import type { PrintLayout } from '@/components/PrintLayoutControls';
 
 interface PrintPreviewProps {
   frontImage: string;
-  backImage: string;
+  backImage?: string;
   showBorder: boolean;
   roundedCorners: boolean;
   layout: PrintLayout;
@@ -35,12 +35,17 @@ export function PrintPreview({
       frontImgRef.current = fi;
       draw();
     };
-    const bi = new Image();
-    bi.src = backImage;
-    bi.onload = () => {
-      backImgRef.current = bi;
+    if (backImage) {
+      const bi = new Image();
+      bi.src = backImage;
+      bi.onload = () => {
+        backImgRef.current = bi;
+        draw();
+      };
+    } else {
+      backImgRef.current = null;
       draw();
-    };
+    }
   }, [frontImage, backImage]);
 
   useEffect(() => {
@@ -49,7 +54,8 @@ export function PrintPreview({
 
   function draw() {
     const canvas = canvasRef.current;
-    if (!canvas || !frontImgRef.current || !backImgRef.current) return;
+    if (!canvas || !frontImgRef.current) return;
+    if (backImage && !backImgRef.current) return;
 
     const container = canvas.parentElement;
     if (!container) return;
@@ -166,7 +172,8 @@ export function PrintPreview({
 
     // Card positions
     const gap = layout.gap;
-    const totalW = CARD_W * 2 + gap;
+    const hasBack = !!backImage && !!backImgRef.current;
+    const totalW = hasBack ? CARD_W * 2 + gap : CARD_W;
     const startX = layout.autoCenter ? (A4_W - totalW) / 2 : layout.marginLeft;
     const y = layout.marginTop;
 
@@ -221,18 +228,23 @@ export function PrintPreview({
     };
 
     drawCard(frontImgRef.current, startX, y);
-    drawCard(backImgRef.current, startX + CARD_W + gap, y);
+    if (hasBack) drawCard(backImgRef.current!, startX + CARD_W + gap, y);
 
     // Card dimension labels (offset by ruler)
     ctx.font = `${8 * (s / 2)}px Inter, sans-serif`;
     ctx.fillStyle = '#6b7280';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    const frontCx = rulerPx + (startX + CARD_W / 2) * s;
-    const backCx = rulerPx + (startX + CARD_W + gap + CARD_W / 2) * s;
     const labelY = rulerPx + (y + CARD_H + 3) * s;
-    ctx.fillText('Front — 90.6 × 59 mm', frontCx, labelY);
-    ctx.fillText('Back — 90.6 × 59 mm', backCx, labelY);
+    if (hasBack) {
+      const frontCx = rulerPx + (startX + CARD_W / 2) * s;
+      const backCx = rulerPx + (startX + CARD_W + gap + CARD_W / 2) * s;
+      ctx.fillText('Front — 90.6 × 59 mm', frontCx, labelY);
+      ctx.fillText('Back — 90.6 × 59 mm', backCx, labelY);
+    } else {
+      const cx = rulerPx + (startX + CARD_W / 2) * s;
+      ctx.fillText('Card — 90.6 × 59 mm', cx, labelY);
+    }
 
     // Paper border
     ctx.strokeStyle = '#d1d5db';

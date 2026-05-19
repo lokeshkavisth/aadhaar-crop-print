@@ -6,6 +6,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
 
 const RENDER_SCALE = 5; // 500 DPI for maximum quality
 
+import type { DocType } from './doc-detector';
+
 export interface CropRegion {
   top: number;
   bottom: number;
@@ -24,9 +26,25 @@ export const DEFAULT_CROP: CropRegion = {
   rightEnd: 93.3,
 };
 
+/** Single-card crop defaults — used for PAN and Jan Aadhaar (one card per page). */
+export const DEFAULT_SINGLE_CROP: CropRegion = {
+  top: 4,
+  bottom: 96,
+  leftStart: 4,
+  leftEnd: 96,
+  rightStart: 0,
+  rightEnd: 0,
+};
+
+export function defaultCropFor(docType: DocType): CropRegion {
+  return docType === 'aadhaar' ? DEFAULT_CROP : DEFAULT_SINGLE_CROP;
+}
+
 export interface ProcessingResult {
+  docType: DocType;
   frontImage: string;
-  backImage: string;
+  /** Undefined for single-card docs (PAN, Jan Aadhaar). */
+  backImage?: string;
   fullPageCanvas: HTMLCanvasElement | null;
 }
 
@@ -218,10 +236,11 @@ export async function processAadhaarPdf(
   roundedCorners: boolean = false
 ): Promise<ProcessingResult> {
   const numPages = pdf.numPages;
-  
+
   if (numPages === 1) {
     const canvas = await renderPageToCanvas(pdf, 1);
     return {
+      docType: 'aadhaar',
       frontImage: cropFromCanvas(canvas, 'front', crop, roundedCorners),
       backImage: cropFromCanvas(canvas, 'back', crop, roundedCorners),
       fullPageCanvas: canvas,
@@ -230,11 +249,40 @@ export async function processAadhaarPdf(
     const canvas1 = await renderPageToCanvas(pdf, 1);
     const canvas2 = await renderPageToCanvas(pdf, 2);
     return {
+      docType: 'aadhaar',
       frontImage: canvas1.toDataURL('image/png', 1.0),
       backImage: canvas2.toDataURL('image/png', 1.0),
       fullPageCanvas: null,
     };
   }
+}
+
+/** Single-card processor (PAN, Jan Aadhaar). Crops one card region from page 1. */
+export async function processSingleCardPdf(
+  pdf: pdfjsLib.PDFDocumentProxy,
+  docType: DocType,
+  crop: CropRegion = DEFAULT_SINGLE_CROP,
+  roundedCorners: boolean = false
+): Promise<ProcessingResult> {
+  const canvas = await renderPageToCanvas(pdf, 1);
+  return {
+    docType,
+    frontImage: cropFromCanvas(canvas, 'front', crop, roundedCorners),
+    fullPageCanvas: canvas,
+  };
+}
+
+/** Dispatcher — pick the right processor based on detected doc type. */
+export async function processPdf(
+  pdf: pdfjsLib.PDFDocumentProxy,
+  docType: DocType,
+  crop?: CropRegion,
+  roundedCorners: boolean = false
+): Promise<ProcessingResult> {
+  if (docType === 'aadhaar') {
+    return processAadhaarPdf(pdf, crop ?? DEFAULT_CROP, roundedCorners);
+  }
+  return processSingleCardPdf(pdf, docType, crop ?? DEFAULT_SINGLE_CROP, roundedCorners);
 }
 
 function drawRoundedRect(pdf: jsPDF, x: number, y: number, w: number, h: number, r: number) {
@@ -258,7 +306,7 @@ function drawRoundedRect(pdf: jsPDF, x: number, y: number, w: number, h: number,
 
 export function generatePrintPdf(
   frontImage: string,
-  backImage: string,
+  backImage: string | undefined,
   options: PrintOptions = {
     showBorder: false,
     roundedCorners: false,
@@ -274,41 +322,36 @@ export function generatePrintPdf(
     format: 'a4',
     compress: false,
   });
-  
+
   const cardW = 90.6;
   const cardH = 58.98;
   const cornerR = 3.37;
-  
+
   const pageW = 210;
   const gap = options.gap;
-  const totalW = cardW * 2 + gap;
+  const hasBack = !!backImage;
+  const totalW = hasBack ? cardW * 2 + gap : cardW;
   const startX = options.autoCenter
     ? (pageW - totalW) / 2
     : options.marginLeft;
   const y = options.marginTop;
-  
-  pdf.addImage(frontImage, 'PNG', startX, y, cardW, cardH);
-  
-  if (options.showBorder) {
+
+  const stroke = (x: number) => {
+    if (!options.showBorder) return;
     pdf.setDrawColor(150);
     pdf.setLineWidth(0.2);
     pdf.setLineDashPattern([2, 2], 0);
-    if (options.roundedCorners) {
-      drawRoundedRect(pdf, startX, y, cardW, cardH, cornerR);
-    } else {
-      pdf.rect(startX, y, cardW, cardH);
-    }
+    if (options.roundedCorners) drawRoundedRect(pdf, x, y, cardW, cardH, cornerR);
+    else pdf.rect(x, y, cardW, cardH);
+  };
+
+  pdf.addImage(frontImage, 'PNG', startX, y, cardW, cardH);
+  stroke(startX);
+
+  if (hasBack && backImage) {
+    pdf.addImage(backImage, 'PNG', startX + cardW + gap, y, cardW, cardH);
+    stroke(startX + cardW + gap);
   }
-  
-  pdf.addImage(backImage, 'PNG', startX + cardW + gap, y, cardW, cardH);
-  
-  if (options.showBorder) {
-    if (options.roundedCorners) {
-      drawRoundedRect(pdf, startX + cardW + gap, y, cardW, cardH, cornerR);
-    } else {
-      pdf.rect(startX + cardW + gap, y, cardW, cardH);
-    }
-  }
-  
+
   return pdf.output('blob');
 }

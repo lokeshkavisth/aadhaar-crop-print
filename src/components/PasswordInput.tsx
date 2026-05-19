@@ -7,9 +7,11 @@ interface PasswordInputProps {
   onSubmit: (password: string) => void;
   isLoading: boolean;
   error: string | null;
+  docLabel?: string;
+  passwordHint?: string;
 }
 
-export function PasswordInput({ onSubmit, isLoading, error }: PasswordInputProps) {
+export function PasswordInput({ onSubmit, isLoading, error, docLabel, passwordHint }: PasswordInputProps) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -24,10 +26,12 @@ export function PasswordInput({ onSubmit, isLoading, error }: PasswordInputProps
     <div className="rounded-xl border border-border bg-card p-6">
       <div className="flex items-center gap-2 mb-4">
         <Lock className="h-5 w-5 text-primary" />
-        <h3 className="font-semibold text-foreground">PDF is Password Protected</h3>
+        <h3 className="font-semibold text-foreground">
+          {docLabel ? `${docLabel} is password protected` : 'PDF is Password Protected'}
+        </h3>
       </div>
       <p className="text-sm text-muted-foreground mb-4">
-        Enter the password to unlock your Aadhaar PDF. This is usually your date of birth or postal PIN code.
+        {passwordHint ?? 'Enter the password to unlock your PDF.'}
       </p>
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="relative">

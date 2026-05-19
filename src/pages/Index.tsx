@@ -16,13 +16,15 @@ import { DEFAULT_CARD_SIZE, type CardOutputSize } from '@/components/CardSizeCon
 import {
   checkIfPasswordProtected,
   loadPdf,
-  processAadhaarPdf,
+  processPdf,
   generatePrintPdf,
   cropFromCanvas,
   DEFAULT_CROP,
+  defaultCropFor,
   type ProcessingResult,
   type CropRegion,
 } from '@/lib/pdf-processor';
+import { detectDocType, detectDocTypeByFilename, DOC_META, type DocType } from '@/lib/doc-detector';
 
 type AppState = 'idle' | 'checking' | 'needs-password' | 'processing' | 'preview' | 'manual-crop';
 
@@ -36,6 +38,7 @@ const Index = () => {
   const [roundedCorners, setRoundedCorners] = usePersistedState<boolean>('aadhaar.roundedCorners', false);
   const [crop, setCrop] = useState<CropRegion>(DEFAULT_CROP);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [docType, setDocType] = useState<DocType>('aadhaar');
   const [layout, setLayout] = usePersistedState<PrintLayout>('aadhaar.layout', DEFAULT_LAYOUT);
   const [filters, setFilters] = usePersistedState<ImageFilters>('aadhaar.filters', DEFAULT_FILTERS);
   const [cardSize, setCardSize] = usePersistedState<CardOutputSize>('aadhaar.cardSize', DEFAULT_CARD_SIZE);
@@ -58,12 +61,16 @@ const Index = () => {
     outputSize?: { width: number; height: number }
   ) => {
     const sz = outputSize ?? { width: cardSize.width, height: cardSize.height };
+    const isAadhaar = docType === 'aadhaar';
     setResult({
+      docType,
       frontImage: cropFromCanvas(canvas, 'front', cropRegion, rounded, imgFilters, sz),
-      backImage: cropFromCanvas(canvas, 'back', cropRegion, rounded, imgFilters, sz),
+      backImage: isAadhaar
+        ? cropFromCanvas(canvas, 'back', cropRegion, rounded, imgFilters, sz)
+        : undefined,
       fullPageCanvas: canvas,
     });
-  }, [cardSize]);
+  }, [cardSize, docType]);
 
   const handleFileSelect = useCallback(async (selectedFile: File) => {
     setFile(selectedFile);
@@ -72,12 +79,18 @@ const Index = () => {
     try {
       const isProtected = await checkIfPasswordProtected(selectedFile);
       if (isProtected) {
+        // Best guess from filename before unlock (PAN often protected, Jan Aadhaar rarely)
+        setDocType(detectDocTypeByFilename(selectedFile));
         setState('needs-password');
       } else {
         setState('processing');
         const pdf = await loadPdf(selectedFile);
         setPdfDoc(pdf);
-        const processed = await processAadhaarPdf(pdf, DEFAULT_CROP, false);
+        const detected = await detectDocType(selectedFile, pdf);
+        setDocType(detected);
+        const initialCrop = defaultCropFor(detected);
+        setCrop(initialCrop);
+        const processed = await processPdf(pdf, detected, initialCrop, false);
         setResult(processed);
         setState('preview');
       }
@@ -95,7 +108,11 @@ const Index = () => {
     try {
       const pdf = await loadPdf(file, password);
       setPdfDoc(pdf);
-      const processed = await processAadhaarPdf(pdf, DEFAULT_CROP, false);
+      const detected = await detectDocType(file, pdf);
+      setDocType(detected);
+      const initialCrop = defaultCropFor(detected);
+      setCrop(initialCrop);
+      const processed = await processPdf(pdf, detected, initialCrop, false);
       setResult(processed);
       setState('preview');
     } catch (error: any) {
@@ -136,7 +153,7 @@ const Index = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'aadhaar-print-ready.pdf';
+      a.download = `${docType}-print-ready.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } finally {
@@ -168,6 +185,7 @@ const Index = () => {
     setPasswordError(null);
     setCrop(DEFAULT_CROP);
     setPdfDoc(null);
+    setDocType('aadhaar');
   }, []);
 
   const handleResetSettings = useCallback(() => {
@@ -226,8 +244,13 @@ const Index = () => {
               <Fingerprint className="h-4 w-4 text-primary-foreground" />
             </div>
             <h1 className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
-              Aadhaar Card Cutter
+              IDSeva Crop
             </h1>
+            {file && (
+              <span className="hidden md:inline-flex text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                {DOC_META[docType].label}
+              </span>
+            )}
           </div>
 
           {/* File chip (center) */}
@@ -294,9 +317,14 @@ const Index = () => {
 
             <section className="space-y-3">
               <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                {state === 'idle' ? 'Upload Aadhaar PDF' : 'Uploaded File'}
+                {state === 'idle' ? 'Upload your ID PDF (Aadhaar · PAN · Jan Aadhaar)' : 'Uploaded file'}
               </h2>
               <FileUpload file={file} onFileSelect={handleFileSelect} onClear={handleReset} />
+              {state === 'idle' && !file && (
+                <p className="text-[11px] text-muted-foreground">
+                  Document type is auto-detected from the PDF contents.
+                </p>
+              )}
             </section>
 
             {state === 'checking' && (
@@ -307,13 +335,19 @@ const Index = () => {
             )}
 
             {state === 'needs-password' && (
-              <PasswordInput onSubmit={handlePasswordSubmit} isLoading={false} error={passwordError} />
+              <PasswordInput
+                onSubmit={handlePasswordSubmit}
+                isLoading={false}
+                error={passwordError}
+                docLabel={DOC_META[docType].label}
+                passwordHint={DOC_META[docType].passwordHint}
+              />
             )}
 
             {state === 'processing' && (
               <div className="flex flex-col items-center justify-center gap-3 py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Processing your Aadhaar PDF…</p>
+                <p className="text-sm text-muted-foreground">Processing your PDF…</p>
               </div>
             )}
 
@@ -321,9 +355,16 @@ const Index = () => {
               <section className="surface-card p-5 space-y-3">
                 <h2 className="text-sm font-semibold text-foreground">How it works</h2>
                 <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
-                  <li>Upload your original Aadhaar letter PDF from UIDAI</li>
-                  <li>Enter the password (first 4 letters of name in CAPS + DOB in YYYY)</li>
-                  <li>Auto-crops front & back of your Aadhaar card</li>
+                  <li>Upload your Aadhaar, PAN or Jan Aadhaar PDF — type is auto-detected</li>
+                  <li>
+                    Enter the password if asked
+                    <span className="block ml-5 mt-0.5 text-xs">
+                      · <b>Aadhaar</b>: first 4 letters of name in CAPS + DOB year (YYYY)
+                      <br />· <b>PAN</b>: Date of Birth in DDMMYYYY
+                      <br />· <b>Jan Aadhaar</b>: usually none
+                    </span>
+                  </li>
+                  <li>Auto-crops your card (front & back for Aadhaar, single card for PAN / Jan Aadhaar)</li>
                   <li>Adjust filters, layout, and download or print directly</li>
                 </ol>
               </section>
@@ -370,10 +411,12 @@ const Index = () => {
                       layout={layout}
                     />
 
-                    {/* Slim front/back strip */}
-                    <div className="grid grid-cols-2 gap-2 rounded-lg border border-border/50 bg-muted/30 p-2">
-                      <ThumbStrip label="Front" src={result.frontImage} rounded={roundedCorners} />
-                      <ThumbStrip label="Back" src={result.backImage} rounded={roundedCorners} />
+                    {/* Slim card thumbnail strip */}
+                    <div className={`grid ${result.backImage ? 'grid-cols-2' : 'grid-cols-1'} gap-2 rounded-lg border border-border/50 bg-muted/30 p-2`}>
+                      <ThumbStrip label={result.backImage ? 'Front' : DOC_META[docType].label} src={result.frontImage} rounded={roundedCorners} />
+                      {result.backImage && (
+                        <ThumbStrip label="Back" src={result.backImage} rounded={roundedCorners} />
+                      )}
                     </div>
                   </section>
                 </div>
