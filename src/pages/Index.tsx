@@ -38,6 +38,7 @@ const Index = () => {
   const [roundedCorners, setRoundedCorners] = usePersistedState<boolean>('aadhaar.roundedCorners', false);
   const [crop, setCrop] = useState<CropRegion>(DEFAULT_CROP);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [docType, setDocType] = useState<DocType>('aadhaar');
   const [layout, setLayout] = usePersistedState<PrintLayout>('aadhaar.layout', DEFAULT_LAYOUT);
   const [filters, setFilters] = usePersistedState<ImageFilters>('aadhaar.filters', DEFAULT_FILTERS);
   const [cardSize, setCardSize] = usePersistedState<CardOutputSize>('aadhaar.cardSize', DEFAULT_CARD_SIZE);
