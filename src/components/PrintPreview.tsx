@@ -35,12 +35,17 @@ export function PrintPreview({
       frontImgRef.current = fi;
       draw();
     };
-    const bi = new Image();
-    bi.src = backImage;
-    bi.onload = () => {
-      backImgRef.current = bi;
+    if (backImage) {
+      const bi = new Image();
+      bi.src = backImage;
+      bi.onload = () => {
+        backImgRef.current = bi;
+        draw();
+      };
+    } else {
+      backImgRef.current = null;
       draw();
-    };
+    }
   }, [frontImage, backImage]);
 
   useEffect(() => {
@@ -49,7 +54,8 @@ export function PrintPreview({
 
   function draw() {
     const canvas = canvasRef.current;
-    if (!canvas || !frontImgRef.current || !backImgRef.current) return;
+    if (!canvas || !frontImgRef.current) return;
+    if (backImage && !backImgRef.current) return;
 
     const container = canvas.parentElement;
     if (!container) return;
