@@ -153,7 +153,7 @@ const Index = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'aadhaar-print-ready.pdf';
+      a.download = `${docType}-print-ready.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } finally {
