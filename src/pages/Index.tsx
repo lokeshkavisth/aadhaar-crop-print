@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { Shield, Loader2, Download, Printer, RotateCcw, Fingerprint, FileText, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/FileUpload';
