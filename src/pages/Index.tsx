@@ -185,6 +185,7 @@ const Index = () => {
     setPasswordError(null);
     setCrop(DEFAULT_CROP);
     setPdfDoc(null);
+    setDocType('aadhaar');
   }, []);
 
   const handleResetSettings = useCallback(() => {
