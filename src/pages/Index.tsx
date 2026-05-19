@@ -352,10 +352,10 @@ const Index = () => {
                         Print Preview
                       </h2>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={handleReset}
-                        className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                        className="h-7 gap-1.5 text-xs border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive shadow-sm"
                       >
                         <RotateCcw className="h-3 w-3" />
                         Start Over
