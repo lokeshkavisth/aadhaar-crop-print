@@ -411,10 +411,12 @@ const Index = () => {
                       layout={layout}
                     />
 
-                    {/* Slim front/back strip */}
-                    <div className="grid grid-cols-2 gap-2 rounded-lg border border-border/50 bg-muted/30 p-2">
-                      <ThumbStrip label="Front" src={result.frontImage} rounded={roundedCorners} />
-                      <ThumbStrip label="Back" src={result.backImage} rounded={roundedCorners} />
+                    {/* Slim card thumbnail strip */}
+                    <div className={`grid ${result.backImage ? 'grid-cols-2' : 'grid-cols-1'} gap-2 rounded-lg border border-border/50 bg-muted/30 p-2`}>
+                      <ThumbStrip label={result.backImage ? 'Front' : DOC_META[docType].label} src={result.frontImage} rounded={roundedCorners} />
+                      {result.backImage && (
+                        <ThumbStrip label="Back" src={result.backImage} rounded={roundedCorners} />
+                      )}
                     </div>
                   </section>
                 </div>
