@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { Shield, Loader2, Download, Printer, RotateCcw, Fingerprint, FileText, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/FileUpload';
@@ -31,13 +32,13 @@ const Index = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [result, setResult] = useState<ProcessingResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showBorder, setShowBorder] = useState(false);
-  const [roundedCorners, setRoundedCorners] = useState(false);
+  const [showBorder, setShowBorder] = usePersistedState<boolean>('aadhaar.showBorder', false);
+  const [roundedCorners, setRoundedCorners] = usePersistedState<boolean>('aadhaar.roundedCorners', false);
   const [crop, setCrop] = useState<CropRegion>(DEFAULT_CROP);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
-  const [layout, setLayout] = useState<PrintLayout>(DEFAULT_LAYOUT);
-  const [filters, setFilters] = useState<ImageFilters>(DEFAULT_FILTERS);
-  const [cardSize, setCardSize] = useState<CardOutputSize>(DEFAULT_CARD_SIZE);
+  const [layout, setLayout] = usePersistedState<PrintLayout>('aadhaar.layout', DEFAULT_LAYOUT);
+  const [filters, setFilters] = usePersistedState<ImageFilters>('aadhaar.filters', DEFAULT_FILTERS);
+  const [cardSize, setCardSize] = usePersistedState<CardOutputSize>('aadhaar.cardSize', DEFAULT_CARD_SIZE);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const pdfOptions = {
@@ -167,11 +168,6 @@ const Index = () => {
     setPasswordError(null);
     setCrop(DEFAULT_CROP);
     setPdfDoc(null);
-    setRoundedCorners(false);
-    setShowBorder(false);
-    setLayout(DEFAULT_LAYOUT);
-    setFilters(DEFAULT_FILTERS);
-    setCardSize(DEFAULT_CARD_SIZE);
   }, []);
 
   const handleResetSettings = useCallback(() => {
@@ -356,10 +352,10 @@ const Index = () => {
                         Print Preview
                       </h2>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={handleReset}
-                        className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                        className="h-7 gap-1.5 text-xs border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive shadow-sm"
                       >
                         <RotateCcw className="h-3 w-3" />
                         Start Over
