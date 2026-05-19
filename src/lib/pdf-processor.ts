@@ -236,10 +236,11 @@ export async function processAadhaarPdf(
   roundedCorners: boolean = false
 ): Promise<ProcessingResult> {
   const numPages = pdf.numPages;
-  
+
   if (numPages === 1) {
     const canvas = await renderPageToCanvas(pdf, 1);
     return {
+      docType: 'aadhaar',
       frontImage: cropFromCanvas(canvas, 'front', crop, roundedCorners),
       backImage: cropFromCanvas(canvas, 'back', crop, roundedCorners),
       fullPageCanvas: canvas,
@@ -248,11 +249,40 @@ export async function processAadhaarPdf(
     const canvas1 = await renderPageToCanvas(pdf, 1);
     const canvas2 = await renderPageToCanvas(pdf, 2);
     return {
+      docType: 'aadhaar',
       frontImage: canvas1.toDataURL('image/png', 1.0),
       backImage: canvas2.toDataURL('image/png', 1.0),
       fullPageCanvas: null,
     };
   }
+}
+
+/** Single-card processor (PAN, Jan Aadhaar). Crops one card region from page 1. */
+export async function processSingleCardPdf(
+  pdf: pdfjsLib.PDFDocumentProxy,
+  docType: DocType,
+  crop: CropRegion = DEFAULT_SINGLE_CROP,
+  roundedCorners: boolean = false
+): Promise<ProcessingResult> {
+  const canvas = await renderPageToCanvas(pdf, 1);
+  return {
+    docType,
+    frontImage: cropFromCanvas(canvas, 'front', crop, roundedCorners),
+    fullPageCanvas: canvas,
+  };
+}
+
+/** Dispatcher — pick the right processor based on detected doc type. */
+export async function processPdf(
+  pdf: pdfjsLib.PDFDocumentProxy,
+  docType: DocType,
+  crop?: CropRegion,
+  roundedCorners: boolean = false
+): Promise<ProcessingResult> {
+  if (docType === 'aadhaar') {
+    return processAadhaarPdf(pdf, crop ?? DEFAULT_CROP, roundedCorners);
+  }
+  return processSingleCardPdf(pdf, docType, crop ?? DEFAULT_SINGLE_CROP, roundedCorners);
 }
 
 function drawRoundedRect(pdf: jsPDF, x: number, y: number, w: number, h: number, r: number) {
