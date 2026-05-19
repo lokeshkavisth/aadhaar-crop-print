@@ -16,13 +16,15 @@ import { DEFAULT_CARD_SIZE, type CardOutputSize } from '@/components/CardSizeCon
 import {
   checkIfPasswordProtected,
   loadPdf,
-  processAadhaarPdf,
+  processPdf,
   generatePrintPdf,
   cropFromCanvas,
   DEFAULT_CROP,
+  defaultCropFor,
   type ProcessingResult,
   type CropRegion,
 } from '@/lib/pdf-processor';
+import { detectDocType, detectDocTypeByFilename, DOC_META, type DocType } from '@/lib/doc-detector';
 
 type AppState = 'idle' | 'checking' | 'needs-password' | 'processing' | 'preview' | 'manual-crop';
 
