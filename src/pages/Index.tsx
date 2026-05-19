@@ -79,12 +79,18 @@ const Index = () => {
     try {
       const isProtected = await checkIfPasswordProtected(selectedFile);
       if (isProtected) {
+        // Best guess from filename before unlock (PAN often protected, Jan Aadhaar rarely)
+        setDocType(detectDocTypeByFilename(selectedFile));
         setState('needs-password');
       } else {
         setState('processing');
         const pdf = await loadPdf(selectedFile);
         setPdfDoc(pdf);
-        const processed = await processAadhaarPdf(pdf, DEFAULT_CROP, false);
+        const detected = await detectDocType(selectedFile, pdf);
+        setDocType(detected);
+        const initialCrop = defaultCropFor(detected);
+        setCrop(initialCrop);
+        const processed = await processPdf(pdf, detected, initialCrop, false);
         setResult(processed);
         setState('preview');
       }
@@ -102,7 +108,11 @@ const Index = () => {
     try {
       const pdf = await loadPdf(file, password);
       setPdfDoc(pdf);
-      const processed = await processAadhaarPdf(pdf, DEFAULT_CROP, false);
+      const detected = await detectDocType(file, pdf);
+      setDocType(detected);
+      const initialCrop = defaultCropFor(detected);
+      setCrop(initialCrop);
+      const processed = await processPdf(pdf, detected, initialCrop, false);
       setResult(processed);
       setState('preview');
     } catch (error: any) {
