@@ -306,7 +306,7 @@ function drawRoundedRect(pdf: jsPDF, x: number, y: number, w: number, h: number,
 
 export function generatePrintPdf(
   frontImage: string,
-  backImage: string,
+  backImage: string | undefined,
   options: PrintOptions = {
     showBorder: false,
     roundedCorners: false,
@@ -322,41 +322,36 @@ export function generatePrintPdf(
     format: 'a4',
     compress: false,
   });
-  
+
   const cardW = 90.6;
   const cardH = 58.98;
   const cornerR = 3.37;
-  
+
   const pageW = 210;
   const gap = options.gap;
-  const totalW = cardW * 2 + gap;
+  const hasBack = !!backImage;
+  const totalW = hasBack ? cardW * 2 + gap : cardW;
   const startX = options.autoCenter
     ? (pageW - totalW) / 2
     : options.marginLeft;
   const y = options.marginTop;
-  
-  pdf.addImage(frontImage, 'PNG', startX, y, cardW, cardH);
-  
-  if (options.showBorder) {
+
+  const stroke = (x: number) => {
+    if (!options.showBorder) return;
     pdf.setDrawColor(150);
     pdf.setLineWidth(0.2);
     pdf.setLineDashPattern([2, 2], 0);
-    if (options.roundedCorners) {
-      drawRoundedRect(pdf, startX, y, cardW, cardH, cornerR);
-    } else {
-      pdf.rect(startX, y, cardW, cardH);
-    }
+    if (options.roundedCorners) drawRoundedRect(pdf, x, y, cardW, cardH, cornerR);
+    else pdf.rect(x, y, cardW, cardH);
+  };
+
+  pdf.addImage(frontImage, 'PNG', startX, y, cardW, cardH);
+  stroke(startX);
+
+  if (hasBack && backImage) {
+    pdf.addImage(backImage, 'PNG', startX + cardW + gap, y, cardW, cardH);
+    stroke(startX + cardW + gap);
   }
-  
-  pdf.addImage(backImage, 'PNG', startX + cardW + gap, y, cardW, cardH);
-  
-  if (options.showBorder) {
-    if (options.roundedCorners) {
-      drawRoundedRect(pdf, startX + cardW + gap, y, cardW, cardH, cornerR);
-    } else {
-      pdf.rect(startX + cardW + gap, y, cardW, cardH);
-    }
-  }
-  
+
   return pdf.output('blob');
 }
