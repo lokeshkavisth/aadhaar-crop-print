@@ -1,22 +1,30 @@
 import { Upload, KeyRound, Eye, Download } from 'lucide-react';
 
 const steps = [
-  { icon: Upload, title: 'Upload PDF', desc: 'Select your Aadhaar letter PDF', color: 'bg-primary/10 text-primary' },
-  { icon: KeyRound, title: 'Enter Password', desc: 'Unlock if password-protected', color: 'bg-accent/10 text-accent' },
-  { icon: Eye, title: 'Preview', desc: 'Review cropped front & back', color: 'bg-primary/10 text-primary' },
-  { icon: Download, title: 'Download', desc: 'Get print-ready PDF', color: 'bg-success/10 text-success' },
+  { icon: Upload, title: 'Upload', desc: 'Drop your ID PDF' },
+  { icon: KeyRound, title: 'Unlock', desc: 'Enter password if asked' },
+  { icon: Eye, title: 'Preview', desc: 'Auto-cropped on A4' },
+  { icon: Download, title: 'Print', desc: 'Download or print' },
 ];
 
 export function StepsGuide() {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
       {steps.map((step, i) => (
-        <div key={i} className="glass-card flex flex-col items-center text-center p-4 rounded-xl group hover:shadow-md transition-shadow">
-          <div className={`flex items-center justify-center h-10 w-10 rounded-xl ${step.color} mb-3`}>
-            <step.icon className="h-5 w-5" />
+        <div
+          key={i}
+          className="relative surface-card p-3 rounded-xl hover:border-primary/40 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10 text-primary shrink-0">
+              <step.icon className="h-4 w-4" />
+            </div>
+            <span className="text-[10px] font-mono font-semibold text-muted-foreground">
+              0{i + 1}
+            </span>
           </div>
-          <p className="text-sm font-semibold text-foreground">{step.title}</p>
-          <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{step.desc}</p>
+          <p className="text-sm font-semibold text-foreground mt-2">{step.title}</p>
+          <p className="text-[11px] text-muted-foreground leading-snug">{step.desc}</p>
         </div>
       ))}
     </div>
