@@ -312,17 +312,37 @@ const Index = () => {
       <main className="flex-1">
         {!isPreview && state !== 'manual-crop' ? (
           /* Single column intake flow */
-          <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-8">
+            {state === 'idle' && !file && (
+              <section className="text-center space-y-4">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-[11px] font-medium text-accent">
+                  <Shield className="h-3 w-3" />
+                  100% browser-only · zero uploads
+                </div>
+                <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground leading-[1.1]">
+                  Print-ready ID cards from any{' '}
+                  <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    Aadhaar, PAN or Jan Aadhaar
+                  </span>{' '}
+                  PDF
+                </h2>
+                <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
+                  Auto-detects your document, crops the card to exact ID-1 size,
+                  and gives you a clean A4 PDF ready to print at home.
+                </p>
+              </section>
+            )}
+
             {state === 'idle' && !file && <StepsGuide />}
 
             <section className="space-y-3">
               <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                {state === 'idle' ? 'Upload your ID PDF (Aadhaar · PAN · Jan Aadhaar)' : 'Uploaded file'}
+                {state === 'idle' ? 'Upload your ID PDF' : 'Uploaded file'}
               </h2>
               <FileUpload file={file} onFileSelect={handleFileSelect} onClear={handleReset} />
               {state === 'idle' && !file && (
-                <p className="text-[11px] text-muted-foreground">
-                  Document type is auto-detected from the PDF contents.
+                <p className="text-[11px] text-muted-foreground text-center">
+                  Aadhaar · e-PAN (NSDL/UTI) · Jan Aadhaar — document type is auto-detected
                 </p>
               )}
             </section>
@@ -352,22 +372,31 @@ const Index = () => {
             )}
 
             {state === 'idle' && !file && (
-              <section className="surface-card p-5 space-y-3">
-                <h2 className="text-sm font-semibold text-foreground">How it works</h2>
-                <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
-                  <li>Upload your Aadhaar, PAN or Jan Aadhaar PDF — type is auto-detected</li>
-                  <li>
-                    Enter the password if asked
-                    <span className="block ml-5 mt-0.5 text-xs">
-                      · <b>Aadhaar</b>: first 4 letters of name in CAPS + DOB year (YYYY)
-                      <br />· <b>PAN</b>: Date of Birth in DDMMYYYY
-                      <br />· <b>Jan Aadhaar</b>: usually none
-                    </span>
-                  </li>
-                  <li>Auto-crops your card (front & back for Aadhaar, single card for PAN / Jan Aadhaar)</li>
-                  <li>Adjust filters, layout, and download or print directly</li>
-                </ol>
-              </section>
+              <>
+                <section className="surface-card p-5 space-y-3">
+                  <h2 className="text-sm font-semibold text-foreground">Password hints</h2>
+                  <ul className="text-xs text-muted-foreground space-y-1.5">
+                    <li>· <b className="text-foreground">Aadhaar</b>: first 4 letters of name in CAPS + birth year (e.g. <code className="font-mono px-1 py-0.5 rounded bg-muted">LOKE1998</code>)</li>
+                    <li>· <b className="text-foreground">PAN (e-PAN)</b>: Date of Birth in <code className="font-mono px-1 py-0.5 rounded bg-muted">DDMMYYYY</code></li>
+                    <li>· <b className="text-foreground">Jan Aadhaar</b>: usually no password</li>
+                  </ul>
+                </section>
+
+                <section className="text-center pt-2">
+                  <a
+                    href="https://github.com/lokeshkavisth"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full surface-card hover:border-primary/40 hover:shadow-md transition-all text-xs group"
+                  >
+                    <span className="text-muted-foreground">Crafted by</span>
+                    <span className="font-semibold text-foreground">Lokesh Sharma</span>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="font-mono text-primary group-hover:underline">@lokeshkavisth</span>
+                    <svg className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.19 1.18a11.1 11.1 0 0 1 2.9-.39c.99 0 1.98.13 2.9.39 2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.77.11 3.06.74.81 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+                  </a>
+                </section>
+              </>
             )}
           </div>
         ) : state === 'manual-crop' && result?.fullPageCanvas ? (
