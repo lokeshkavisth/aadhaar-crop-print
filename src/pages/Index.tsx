@@ -518,7 +518,16 @@ const Index = () => {
             All processing happens in your browser. No data is uploaded.
           </p>
           <p className="text-[11px] text-muted-foreground">
-            Built by <span className="font-semibold text-foreground">Lokesh Sharma</span>
+            Built by{' '}
+            <a
+              href="https://github.com/lokeshkavisth"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-foreground hover:text-primary transition-colors"
+            >
+              Lokesh Sharma
+            </a>{' '}
+            <span className="font-mono text-muted-foreground/70">@lokeshkavisth</span>
           </p>
         </div>
       </footer>
