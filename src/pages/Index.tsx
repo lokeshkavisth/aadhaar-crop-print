@@ -229,6 +229,7 @@ const Index = () => {
     setCrop(DEFAULT_CROP);
     setPdfDoc(null);
     setDocType('aadhaar');
+    setSwapped(false);
   }, []);
 
   const handleResetSettings = useCallback(() => {
