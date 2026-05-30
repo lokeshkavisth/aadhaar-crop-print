@@ -333,17 +333,59 @@ const Index = () => {
                   <Printer className="h-3.5 w-3.5" />
                   Print
                 </Button>
-                <Button
-                  variant="success"
-                  size="sm"
-                  onClick={handleDownload}
-                  disabled={isGenerating}
-                  className="h-8 gap-1.5"
-                  title="Ctrl/Cmd + S"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  {isGenerating ? '…' : 'Download'}
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="success"
+                      size="sm"
+                      disabled={isGenerating}
+                      className="h-8 gap-1.5"
+                      title="Ctrl/Cmd + S"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      {isGenerating ? '…' : 'Export'}
+                      <ChevronDown className="h-3 w-3 opacity-70" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      A4 print-ready
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem onClick={handleDownload} className="gap-2 text-xs">
+                      <FileText className="h-3.5 w-3.5" /> PDF (A4)
+                      <span className="ml-auto text-[10px] text-muted-foreground">⌘S</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Card image
+                    </DropdownMenuLabel>
+                    {result?.backImage ? (
+                      <>
+                        <DropdownMenuItem onClick={() => handleExportImage('front', 'png')} className="gap-2 text-xs">
+                          <ImageIcon className="h-3.5 w-3.5" /> Front · PNG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExportImage('back', 'png')} className="gap-2 text-xs">
+                          <ImageIcon className="h-3.5 w-3.5" /> Back · PNG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExportImage('front', 'jpg')} className="gap-2 text-xs">
+                          <FileImage className="h-3.5 w-3.5" /> Front · JPG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExportImage('back', 'jpg')} className="gap-2 text-xs">
+                          <FileImage className="h-3.5 w-3.5" /> Back · JPG
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <DropdownMenuItem onClick={() => handleExportImage('front', 'png')} className="gap-2 text-xs">
+                          <ImageIcon className="h-3.5 w-3.5" /> PNG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExportImage('front', 'jpg')} className="gap-2 text-xs">
+                          <FileImage className="h-3.5 w-3.5" /> JPG
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             )}
 
