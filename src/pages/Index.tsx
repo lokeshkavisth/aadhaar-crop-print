@@ -659,12 +659,48 @@ const Index = () => {
   );
 };
 
-function ThumbStrip({ label, src, rounded }: { label: string; src: string; rounded: boolean }) {
+function ThumbStrip({
+  label,
+  src,
+  rounded,
+  draggable = false,
+  isDragging = false,
+  onDragStart,
+  onDragEnd,
+  onDropSide,
+}: {
+  label: string;
+  src: string;
+  rounded: boolean;
+  draggable?: boolean;
+  isDragging?: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+  onDropSide?: () => void;
+}) {
   return (
-    <div className="space-y-1">
-      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
+    <div
+      className={`space-y-1 ${draggable ? 'cursor-move' : ''} ${isDragging ? 'opacity-40' : ''}`}
+      draggable={draggable}
+      onDragStart={(e) => {
+        if (!draggable) return;
+        e.dataTransfer.effectAllowed = 'move';
+        onDragStart?.();
+      }}
+      onDragOver={(e) => draggable && e.preventDefault()}
+      onDrop={(e) => {
+        if (!draggable) return;
+        e.preventDefault();
+        onDropSide?.();
+      }}
+      onDragEnd={onDragEnd}
+    >
+      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+        {draggable && <GripVertical className="h-3 w-3 opacity-60" />}
+        {label}
+      </p>
       <div className={`overflow-hidden bg-card shadow-sm ${rounded ? 'rounded-lg' : 'rounded-sm'}`}>
-        <img src={src} alt={`Aadhaar ${label}`} className="w-full h-auto block" />
+        <img src={src} alt={label} className="w-full h-auto block" draggable={false} />
       </div>
     </div>
   );
