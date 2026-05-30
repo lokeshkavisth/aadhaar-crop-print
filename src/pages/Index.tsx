@@ -160,9 +160,28 @@ const Index = () => {
   }, [result, crop, roundedCorners, reprocessWithOptions]);
 
   const createPdfBlob = useCallback(() => {
-    if (!result) return null;
-    return generatePrintPdf(result.frontImage, result.backImage, pdfOptions);
-  }, [result, pdfOptions]);
+    if (!result || !display) return null;
+    return generatePrintPdf(display.frontImage, display.backImage, pdfOptions);
+  }, [result, display, pdfOptions]);
+
+  const handleExportImage = useCallback(
+    async (side: 'front' | 'back', format: 'png' | 'jpg') => {
+      if (!display) return;
+      const src = side === 'front' ? display.frontImage : display.backImage;
+      if (!src) return;
+      const dataUrl = format === 'jpg' ? await pngToJpg(src) : src;
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+      const typeLabel = DOC_META[docType].label.replace(/\s+/g, '');
+      const sideLabel = result?.backImage ? `-${side}` : '';
+      a.download = `IDSevaCrop-${typeLabel}${sideLabel}-${stamp}.${format}`;
+      a.click();
+    },
+    [display, docType, result],
+  );
 
   const handleDownload = useCallback(() => {
     if (!result) return;
