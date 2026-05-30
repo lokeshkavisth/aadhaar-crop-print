@@ -1,6 +1,15 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { usePersistedState } from '@/hooks/usePersistedState';
-import { Shield, Loader2, Download, Printer, RotateCcw, Fingerprint, FileText, X } from 'lucide-react';
+import {
+  Shield, Loader2, Download, Printer, RotateCcw, Fingerprint, FileText, X,
+  ArrowLeftRight, ChevronDown, Image as ImageIcon, FileImage, Layers, GripVertical,
+} from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { pngToJpg } from '@/lib/batch-processor';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/FileUpload';
 import { PasswordInput } from '@/components/PasswordInput';
@@ -43,6 +52,17 @@ const Index = () => {
   const [filters, setFilters] = usePersistedState<ImageFilters>('aadhaar.filters', DEFAULT_FILTERS);
   const [cardSize, setCardSize] = usePersistedState<CardOutputSize>('aadhaar.cardSize', DEFAULT_CARD_SIZE);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [swapped, setSwapped] = useState(false);
+  const [dragSide, setDragSide] = useState<null | 'front' | 'back'>(null);
+
+  // Display order applies swap (only meaningful when 2 cards exist)
+  const display = useMemo(() => {
+    if (!result) return null;
+    if (swapped && result.backImage) {
+      return { frontImage: result.backImage, backImage: result.frontImage };
+    }
+    return { frontImage: result.frontImage, backImage: result.backImage };
+  }, [result, swapped]);
 
   const pdfOptions = {
     showBorder,
@@ -140,9 +160,28 @@ const Index = () => {
   }, [result, crop, roundedCorners, reprocessWithOptions]);
 
   const createPdfBlob = useCallback(() => {
-    if (!result) return null;
-    return generatePrintPdf(result.frontImage, result.backImage, pdfOptions);
-  }, [result, pdfOptions]);
+    if (!result || !display) return null;
+    return generatePrintPdf(display.frontImage, display.backImage, pdfOptions);
+  }, [result, display, pdfOptions]);
+
+  const handleExportImage = useCallback(
+    async (side: 'front' | 'back', format: 'png' | 'jpg') => {
+      if (!display) return;
+      const src = side === 'front' ? display.frontImage : display.backImage;
+      if (!src) return;
+      const dataUrl = format === 'jpg' ? await pngToJpg(src) : src;
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+      const typeLabel = DOC_META[docType].label.replace(/\s+/g, '');
+      const sideLabel = result?.backImage ? `-${side}` : '';
+      a.download = `IDSevaCrop-${typeLabel}${sideLabel}-${stamp}.${format}`;
+      a.click();
+    },
+    [display, docType, result],
+  );
 
   const handleDownload = useCallback(() => {
     if (!result) return;
@@ -190,6 +229,7 @@ const Index = () => {
     setCrop(DEFAULT_CROP);
     setPdfDoc(null);
     setDocType('aadhaar');
+    setSwapped(false);
   }, []);
 
   const handleResetSettings = useCallback(() => {
@@ -293,17 +333,59 @@ const Index = () => {
                   <Printer className="h-3.5 w-3.5" />
                   Print
                 </Button>
-                <Button
-                  variant="success"
-                  size="sm"
-                  onClick={handleDownload}
-                  disabled={isGenerating}
-                  className="h-8 gap-1.5"
-                  title="Ctrl/Cmd + S"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  {isGenerating ? '…' : 'Download'}
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="success"
+                      size="sm"
+                      disabled={isGenerating}
+                      className="h-8 gap-1.5"
+                      title="Ctrl/Cmd + S"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      {isGenerating ? '…' : 'Export'}
+                      <ChevronDown className="h-3 w-3 opacity-70" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      A4 print-ready
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem onClick={handleDownload} className="gap-2 text-xs">
+                      <FileText className="h-3.5 w-3.5" /> PDF (A4)
+                      <span className="ml-auto text-[10px] text-muted-foreground">⌘S</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Card image
+                    </DropdownMenuLabel>
+                    {result?.backImage ? (
+                      <>
+                        <DropdownMenuItem onClick={() => handleExportImage('front', 'png')} className="gap-2 text-xs">
+                          <ImageIcon className="h-3.5 w-3.5" /> Front · PNG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExportImage('back', 'png')} className="gap-2 text-xs">
+                          <ImageIcon className="h-3.5 w-3.5" /> Back · PNG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExportImage('front', 'jpg')} className="gap-2 text-xs">
+                          <FileImage className="h-3.5 w-3.5" /> Front · JPG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExportImage('back', 'jpg')} className="gap-2 text-xs">
+                          <FileImage className="h-3.5 w-3.5" /> Back · JPG
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <DropdownMenuItem onClick={() => handleExportImage('front', 'png')} className="gap-2 text-xs">
+                          <ImageIcon className="h-3.5 w-3.5" /> PNG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExportImage('front', 'jpg')} className="gap-2 text-xs">
+                          <FileImage className="h-3.5 w-3.5" /> JPG
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             )}
 
@@ -345,9 +427,31 @@ const Index = () => {
               </h2>
               <FileUpload file={file} onFileSelect={handleFileSelect} onClear={handleReset} />
               {state === 'idle' && !file && (
-                <p className="text-[11px] text-muted-foreground text-center">
-                  Aadhaar · e-PAN (NSDL/UTI) · Jan Aadhaar — document type is auto-detected
-                </p>
+                <>
+                  <p className="text-[11px] text-muted-foreground text-center">
+                    Aadhaar · e-PAN (NSDL/UTI) · Jan Aadhaar — document type is auto-detected
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">or</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+                  <Link
+                    to="/batch"
+                    className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl surface-card hover:border-primary/40 hover:shadow-md transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
+                        <Layers className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Batch process multiple PDFs</p>
+                        <p className="text-[11px] text-muted-foreground">Combine many cards into one A4 — drag to reorder</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-medium text-primary group-hover:underline shrink-0">Open →</span>
+                  </Link>
+                </>
               )}
             </section>
 
@@ -421,34 +525,72 @@ const Index = () => {
               <div className="lg:col-span-8 xl:col-span-9">
                 <div className="lg:sticky lg:top-[60px] space-y-3">
                   <section className="surface-card p-3 space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
                         Print Preview
                       </h2>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleReset}
-                        className="h-7 gap-1.5 text-xs border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive shadow-sm"
-                      >
-                        <RotateCcw className="h-3 w-3" />
-                        Start Over
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        {result.backImage && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSwapped((s) => !s)}
+                            className="h-7 gap-1.5 text-xs"
+                            title="Swap front and back"
+                          >
+                            <ArrowLeftRight className="h-3 w-3" />
+                            Swap
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleReset}
+                          className="h-7 gap-1.5 text-xs border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive shadow-sm"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          Start Over
+                        </Button>
+                      </div>
                     </div>
 
                     <PrintPreview
-                      frontImage={result.frontImage}
-                      backImage={result.backImage}
+                      frontImage={display!.frontImage}
+                      backImage={display!.backImage}
                       showBorder={showBorder}
                       roundedCorners={roundedCorners}
                       layout={layout}
                     />
 
-                    {/* Slim card thumbnail strip */}
-                    <div className={`grid ${result.backImage ? 'grid-cols-2' : 'grid-cols-1'} gap-2 rounded-lg border border-border/50 bg-muted/30 p-2`}>
-                      <ThumbStrip label={result.backImage ? 'Front' : DOC_META[docType].label} src={result.frontImage} rounded={roundedCorners} />
-                      {result.backImage && (
-                        <ThumbStrip label="Back" src={result.backImage} rounded={roundedCorners} />
+                    {/* Drag-to-reorder card thumbnail strip */}
+                    <div className={`grid ${display!.backImage ? 'grid-cols-2' : 'grid-cols-1'} gap-2 rounded-lg border border-border/50 bg-muted/30 p-2`}>
+                      <ThumbStrip
+                        label={display!.backImage ? 'Front' : DOC_META[docType].label}
+                        src={display!.frontImage}
+                        rounded={roundedCorners}
+                        draggable={!!display!.backImage}
+                        isDragging={dragSide === 'front'}
+                        onDragStart={() => setDragSide('front')}
+                        onDragEnd={() => setDragSide(null)}
+                        onDropSide={() => {
+                          if (dragSide === 'back') setSwapped((s) => !s);
+                          setDragSide(null);
+                        }}
+                      />
+                      {display!.backImage && (
+                        <ThumbStrip
+                          label="Back"
+                          src={display!.backImage}
+                          rounded={roundedCorners}
+                          draggable
+                          isDragging={dragSide === 'back'}
+                          onDragStart={() => setDragSide('back')}
+                          onDragEnd={() => setDragSide(null)}
+                          onDropSide={() => {
+                            if (dragSide === 'front') setSwapped((s) => !s);
+                            setDragSide(null);
+                          }}
+                        />
                       )}
                     </div>
                   </section>
@@ -539,12 +681,48 @@ const Index = () => {
   );
 };
 
-function ThumbStrip({ label, src, rounded }: { label: string; src: string; rounded: boolean }) {
+function ThumbStrip({
+  label,
+  src,
+  rounded,
+  draggable = false,
+  isDragging = false,
+  onDragStart,
+  onDragEnd,
+  onDropSide,
+}: {
+  label: string;
+  src: string;
+  rounded: boolean;
+  draggable?: boolean;
+  isDragging?: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+  onDropSide?: () => void;
+}) {
   return (
-    <div className="space-y-1">
-      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
+    <div
+      className={`space-y-1 ${draggable ? 'cursor-move' : ''} ${isDragging ? 'opacity-40' : ''}`}
+      draggable={draggable}
+      onDragStart={(e) => {
+        if (!draggable) return;
+        e.dataTransfer.effectAllowed = 'move';
+        onDragStart?.();
+      }}
+      onDragOver={(e) => draggable && e.preventDefault()}
+      onDrop={(e) => {
+        if (!draggable) return;
+        e.preventDefault();
+        onDropSide?.();
+      }}
+      onDragEnd={onDragEnd}
+    >
+      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+        {draggable && <GripVertical className="h-3 w-3 opacity-60" />}
+        {label}
+      </p>
       <div className={`overflow-hidden bg-card shadow-sm ${rounded ? 'rounded-lg' : 'rounded-sm'}`}>
-        <img src={src} alt={`Aadhaar ${label}`} className="w-full h-auto block" />
+        <img src={src} alt={label} className="w-full h-auto block" draggable={false} />
       </div>
     </div>
   );
