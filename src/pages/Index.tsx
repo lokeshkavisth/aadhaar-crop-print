@@ -1,6 +1,15 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { usePersistedState } from '@/hooks/usePersistedState';
-import { Shield, Loader2, Download, Printer, RotateCcw, Fingerprint, FileText, X } from 'lucide-react';
+import {
+  Shield, Loader2, Download, Printer, RotateCcw, Fingerprint, FileText, X,
+  ArrowLeftRight, ChevronDown, Image as ImageIcon, FileImage, Layers, GripVertical,
+} from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { pngToJpg } from '@/lib/batch-processor';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/FileUpload';
 import { PasswordInput } from '@/components/PasswordInput';
