@@ -52,6 +52,17 @@ const Index = () => {
   const [filters, setFilters] = usePersistedState<ImageFilters>('aadhaar.filters', DEFAULT_FILTERS);
   const [cardSize, setCardSize] = usePersistedState<CardOutputSize>('aadhaar.cardSize', DEFAULT_CARD_SIZE);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [swapped, setSwapped] = useState(false);
+  const [dragSide, setDragSide] = useState<null | 'front' | 'back'>(null);
+
+  // Display order applies swap (only meaningful when 2 cards exist)
+  const display = useMemo(() => {
+    if (!result) return null;
+    if (swapped && result.backImage) {
+      return { frontImage: result.backImage, backImage: result.frontImage };
+    }
+    return { frontImage: result.frontImage, backImage: result.backImage };
+  }, [result, swapped]);
 
   const pdfOptions = {
     showBorder,
