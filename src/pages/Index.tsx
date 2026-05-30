@@ -427,9 +427,31 @@ const Index = () => {
               </h2>
               <FileUpload file={file} onFileSelect={handleFileSelect} onClear={handleReset} />
               {state === 'idle' && !file && (
-                <p className="text-[11px] text-muted-foreground text-center">
-                  Aadhaar · e-PAN (NSDL/UTI) · Jan Aadhaar — document type is auto-detected
-                </p>
+                <>
+                  <p className="text-[11px] text-muted-foreground text-center">
+                    Aadhaar · e-PAN (NSDL/UTI) · Jan Aadhaar — document type is auto-detected
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">or</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+                  <Link
+                    to="/batch"
+                    className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl surface-card hover:border-primary/40 hover:shadow-md transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
+                        <Layers className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Batch process multiple PDFs</p>
+                        <p className="text-[11px] text-muted-foreground">Combine many cards into one A4 — drag to reorder</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-medium text-primary group-hover:underline shrink-0">Open →</span>
+                  </Link>
+                </>
               )}
             </section>
 
