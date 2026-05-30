@@ -503,34 +503,72 @@ const Index = () => {
               <div className="lg:col-span-8 xl:col-span-9">
                 <div className="lg:sticky lg:top-[60px] space-y-3">
                   <section className="surface-card p-3 space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
                         Print Preview
                       </h2>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleReset}
-                        className="h-7 gap-1.5 text-xs border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive shadow-sm"
-                      >
-                        <RotateCcw className="h-3 w-3" />
-                        Start Over
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        {result.backImage && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSwapped((s) => !s)}
+                            className="h-7 gap-1.5 text-xs"
+                            title="Swap front and back"
+                          >
+                            <ArrowLeftRight className="h-3 w-3" />
+                            Swap
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleReset}
+                          className="h-7 gap-1.5 text-xs border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive shadow-sm"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          Start Over
+                        </Button>
+                      </div>
                     </div>
 
                     <PrintPreview
-                      frontImage={result.frontImage}
-                      backImage={result.backImage}
+                      frontImage={display!.frontImage}
+                      backImage={display!.backImage}
                       showBorder={showBorder}
                       roundedCorners={roundedCorners}
                       layout={layout}
                     />
 
-                    {/* Slim card thumbnail strip */}
-                    <div className={`grid ${result.backImage ? 'grid-cols-2' : 'grid-cols-1'} gap-2 rounded-lg border border-border/50 bg-muted/30 p-2`}>
-                      <ThumbStrip label={result.backImage ? 'Front' : DOC_META[docType].label} src={result.frontImage} rounded={roundedCorners} />
-                      {result.backImage && (
-                        <ThumbStrip label="Back" src={result.backImage} rounded={roundedCorners} />
+                    {/* Drag-to-reorder card thumbnail strip */}
+                    <div className={`grid ${display!.backImage ? 'grid-cols-2' : 'grid-cols-1'} gap-2 rounded-lg border border-border/50 bg-muted/30 p-2`}>
+                      <ThumbStrip
+                        label={display!.backImage ? 'Front' : DOC_META[docType].label}
+                        src={display!.frontImage}
+                        rounded={roundedCorners}
+                        draggable={!!display!.backImage}
+                        isDragging={dragSide === 'front'}
+                        onDragStart={() => setDragSide('front')}
+                        onDragEnd={() => setDragSide(null)}
+                        onDropSide={() => {
+                          if (dragSide === 'back') setSwapped((s) => !s);
+                          setDragSide(null);
+                        }}
+                      />
+                      {display!.backImage && (
+                        <ThumbStrip
+                          label="Back"
+                          src={display!.backImage}
+                          rounded={roundedCorners}
+                          draggable
+                          isDragging={dragSide === 'back'}
+                          onDragStart={() => setDragSide('back')}
+                          onDragEnd={() => setDragSide(null)}
+                          onDropSide={() => {
+                            if (dragSide === 'front') setSwapped((s) => !s);
+                            setDragSide(null);
+                          }}
+                        />
                       )}
                     </div>
                   </section>
