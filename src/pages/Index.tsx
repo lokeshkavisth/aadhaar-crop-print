@@ -18,6 +18,7 @@ import { StepsGuide } from '@/components/StepsGuide';
 import { QuickOptions } from '@/components/QuickOptions';
 import { AdvancedDrawer } from '@/components/AdvancedDrawer';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { InstallButton } from '@/components/InstallButton';
 import { PrintPreview } from '@/components/PrintPreview';
 import { DEFAULT_LAYOUT, type PrintLayout } from '@/components/PrintLayoutControls';
 import { DEFAULT_FILTERS, type ImageFilters } from '@/components/ImageFilterControls';
@@ -389,6 +390,7 @@ const Index = () => {
               </>
             )}
 
+            <InstallButton compact />
             <ThemeToggle />
           </div>
         </div>

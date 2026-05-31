@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { InstallButton } from '@/components/InstallButton';
 import {
   processBatchFile,
   generateBatchPdf,
@@ -127,6 +128,7 @@ const Batch = () => {
               Download PDF
             </Button>
           )}
+          <InstallButton compact />
           <ThemeToggle />
         </div>
       </header>
