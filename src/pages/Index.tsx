@@ -374,13 +374,19 @@ const Index = () => {
                       <ChevronDown className="h-3 w-3 opacity-70" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
                       A4 print-ready
                     </DropdownMenuLabel>
                     <DropdownMenuItem onClick={handleDownload} className="gap-2 text-xs">
                       <FileText className="h-3.5 w-3.5" /> PDF (A4)
                       <span className="ml-auto text-[10px] text-muted-foreground">⌘S</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleAddToSheet} className="gap-2 text-xs">
+                      <Plus className="h-3.5 w-3.5 text-primary" /> Add to A4 Sheet
+                      {sheet.count > 0 && (
+                        <span className="ml-auto text-[10px] font-mono text-primary">{sheet.count}</span>
+                      )}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
