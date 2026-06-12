@@ -647,6 +647,7 @@ const Index = () => {
                   <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest px-1">
                     Quick options
                   </h2>
+                  <PresetSelector onApply={applyPreset} />
                   <QuickOptions
                     showBorder={showBorder}
                     onBorderToggle={setShowBorder}
