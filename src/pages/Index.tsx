@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import {
   Shield, Loader2, Download, Printer, RotateCcw, Fingerprint, FileText, X,
-  ArrowLeftRight, ChevronDown, Image as ImageIcon, FileImage, Layers, GripVertical,
+  ArrowLeftRight, ChevronDown, Image as ImageIcon, FileImage, Layers, GripVertical, Plus,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { pngToJpg } from '@/lib/batch-processor';
+import { pngToJpg, type BatchCard } from '@/lib/batch-processor';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/FileUpload';
 import { PasswordInput } from '@/components/PasswordInput';
@@ -20,6 +20,9 @@ import { AdvancedDrawer } from '@/components/AdvancedDrawer';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { InstallButton } from '@/components/InstallButton';
 import { PrintPreview } from '@/components/PrintPreview';
+import { PresetSelector, type PresetValue } from '@/components/PresetSelector';
+import { useSheet, SheetTray } from '@/components/SheetComposer';
+import { toast } from '@/hooks/use-toast';
 import { DEFAULT_LAYOUT, type PrintLayout } from '@/components/PrintLayoutControls';
 import { DEFAULT_FILTERS, type ImageFilters } from '@/components/ImageFilterControls';
 import { DEFAULT_CARD_SIZE, type CardOutputSize } from '@/components/CardSizeControls';
@@ -55,6 +58,7 @@ const Index = () => {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [swapped, setSwapped] = useState(false);
   const [dragSide, setDragSide] = useState<null | 'front' | 'back'>(null);
+  const sheet = useSheet();
 
   // Display order applies swap (only meaningful when 2 cards exist)
   const display = useMemo(() => {
@@ -92,6 +96,28 @@ const Index = () => {
       fullPageCanvas: canvas,
     });
   }, [cardSize, docType]);
+
+  const applyPreset = useCallback((p: PresetValue) => {
+    setLayout(p.layout);
+    setShowBorder(p.showBorder);
+    setRoundedCorners(p.roundedCorners);
+    if (result?.fullPageCanvas) {
+      reprocessWithOptions(result.fullPageCanvas, crop, p.roundedCorners, filters);
+    }
+    toast({ title: 'Preset applied' });
+  }, [result, crop, filters, reprocessWithOptions, setLayout, setShowBorder, setRoundedCorners]);
+
+  const handleAddToSheet = useCallback(() => {
+    if (!display) return;
+    const items: BatchCard[] = [];
+    items.push({ file: file?.name ?? 'card', docType, side: display.backImage ? 'front' : 'card', image: display.frontImage });
+    if (display.backImage) {
+      items.push({ file: file?.name ?? 'card', docType, side: 'back', image: display.backImage });
+    }
+    sheet.add(items);
+    toast({ title: `Added ${items.length} card${items.length === 1 ? '' : 's'} to sheet`, description: `${sheet.count + items.length} total queued` });
+  }, [display, docType, file, sheet]);
+
 
   const handleFileSelect = useCallback(async (selectedFile: File) => {
     setFile(selectedFile);
@@ -348,13 +374,19 @@ const Index = () => {
                       <ChevronDown className="h-3 w-3 opacity-70" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
                       A4 print-ready
                     </DropdownMenuLabel>
                     <DropdownMenuItem onClick={handleDownload} className="gap-2 text-xs">
                       <FileText className="h-3.5 w-3.5" /> PDF (A4)
                       <span className="ml-auto text-[10px] text-muted-foreground">⌘S</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleAddToSheet} className="gap-2 text-xs">
+                      <Plus className="h-3.5 w-3.5 text-primary" /> Add to A4 Sheet
+                      {sheet.count > 0 && (
+                        <span className="ml-auto text-[10px] font-mono text-primary">{sheet.count}</span>
+                      )}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -596,8 +628,18 @@ const Index = () => {
                       )}
                     </div>
                   </section>
+
+                  <SheetTray
+                    cards={sheet.cards}
+                    onRemove={sheet.remove}
+                    onMove={sheet.move}
+                    onClear={sheet.clear}
+                    showBorder={showBorder}
+                    roundedCorners={roundedCorners}
+                  />
                 </div>
               </div>
+
 
               {/* RIGHT: Quick options */}
               <div className="lg:col-span-4 xl:col-span-3">
@@ -605,6 +647,7 @@ const Index = () => {
                   <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest px-1">
                     Quick options
                   </h2>
+                  <PresetSelector onApply={applyPreset} />
                   <QuickOptions
                     showBorder={showBorder}
                     onBorderToggle={setShowBorder}
