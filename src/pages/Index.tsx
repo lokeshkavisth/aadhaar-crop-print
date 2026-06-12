@@ -628,8 +628,18 @@ const Index = () => {
                       )}
                     </div>
                   </section>
+
+                  <SheetTray
+                    cards={sheet.cards}
+                    onRemove={sheet.remove}
+                    onMove={sheet.move}
+                    onClear={sheet.clear}
+                    showBorder={showBorder}
+                    roundedCorners={roundedCorners}
+                  />
                 </div>
               </div>
+
 
               {/* RIGHT: Quick options */}
               <div className="lg:col-span-4 xl:col-span-3">
