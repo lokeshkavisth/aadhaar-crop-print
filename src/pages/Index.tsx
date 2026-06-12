@@ -58,6 +58,28 @@ const Index = () => {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [swapped, setSwapped] = useState(false);
   const [dragSide, setDragSide] = useState<null | 'front' | 'back'>(null);
+  const sheet = useSheet();
+
+  const applyPreset = useCallback((p: PresetValue) => {
+    setLayout(p.layout);
+    setShowBorder(p.showBorder);
+    setRoundedCorners(p.roundedCorners);
+    if (result?.fullPageCanvas) {
+      reprocessWithOptions(result.fullPageCanvas, crop, p.roundedCorners, filters);
+    }
+    toast({ title: 'Preset applied' });
+  }, [result, crop, filters]);
+
+  const handleAddToSheet = useCallback(() => {
+    if (!display) return;
+    const items: BatchCard[] = [];
+    items.push({ file: file?.name ?? 'card', docType, side: display.backImage ? 'front' : 'card', image: display.frontImage });
+    if (display.backImage) {
+      items.push({ file: file?.name ?? 'card', docType, side: 'back', image: display.backImage });
+    }
+    sheet.add(items);
+    toast({ title: `Added ${items.length} card${items.length === 1 ? '' : 's'} to sheet`, description: `${sheet.count + items.length} total` });
+  }, [display, docType, file, sheet]);
 
   // Display order applies swap (only meaningful when 2 cards exist)
   const display = useMemo(() => {
