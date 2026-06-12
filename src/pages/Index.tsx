@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import {
   Shield, Loader2, Download, Printer, RotateCcw, Fingerprint, FileText, X,
-  ArrowLeftRight, ChevronDown, Image as ImageIcon, FileImage, Layers, GripVertical,
+  ArrowLeftRight, ChevronDown, Image as ImageIcon, FileImage, Layers, GripVertical, Plus,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { pngToJpg } from '@/lib/batch-processor';
+import { pngToJpg, type BatchCard } from '@/lib/batch-processor';
 import { Button } from '@/components/ui/button';
 import { FileUpload } from '@/components/FileUpload';
 import { PasswordInput } from '@/components/PasswordInput';
@@ -20,6 +20,9 @@ import { AdvancedDrawer } from '@/components/AdvancedDrawer';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { InstallButton } from '@/components/InstallButton';
 import { PrintPreview } from '@/components/PrintPreview';
+import { PresetSelector, type PresetValue } from '@/components/PresetSelector';
+import { useSheet, SheetTray } from '@/components/SheetComposer';
+import { toast } from '@/hooks/use-toast';
 import { DEFAULT_LAYOUT, type PrintLayout } from '@/components/PrintLayoutControls';
 import { DEFAULT_FILTERS, type ImageFilters } from '@/components/ImageFilterControls';
 import { DEFAULT_CARD_SIZE, type CardOutputSize } from '@/components/CardSizeControls';
