@@ -1,83 +1,77 @@
 ## Goal
-Tighten the existing 2-column layout into a **compact pro-tool** experience with floating quick actions, an advanced settings drawer, and a header dark-mode toggle — keeping all current functionality intact.
+Turn IDSeva Crop into a daily-driver for **cybercafes, CSC centers, and eMitra operators**. They run high volumes, mixed document types, and need fast, paper-saving output with traceable filenames.
 
----
+## What to add
 
-## 1. Theming & Dark Mode
-- Add a refined dark palette in `src/index.css` (deep slate background, elevated surfaces, same primary/accent shifted for contrast).
-- Add `ThemeProvider` (lightweight, no extra dep — toggle `dark` class on `<html>`, persist in `localStorage`, default = system).
-- Header gets a **Sun/Moon toggle** next to the "Browser-only" pill.
-- Audit semantic tokens so glass-card, borders, and muted surfaces look correct in both modes.
+### 1. More Indian ID document types
+Extend `DocType` and `DOC_META` in `src/lib/doc-detector.ts` with content + filename detection:
+- **Voter ID (EPIC)** — keywords: "election commission", "EPIC", "voter"
+- **Driving License (Parivahan/Sarathi e-DL)** — "driving licence", "sarathi", "parivahan"
+- **Ayushman Bharat (PMJAY)** — "ayushman", "pmjay", "abha"
+- **PVC Aadhaar / mAadhaar print** — already handled but tune
+- **RC (Vehicle Registration)** — "registration certificate", "RTO"
 
-## 2. Compact Header (denser, more useful)
-- Reduce header height; move actions inline:
-  - Logo + title (smaller, single line)
-  - Center: filename chip (when uploaded) with inline "Replace" / "Reset" icons
-  - Right: Privacy pill, Theme toggle, primary **Download** + **Print** split-button (only when in preview state)
-- Removes the duplicate footer-style action row; primary actions now live persistently in header.
+Each gets its own `passwordHint`, default crop region (`defaultCropFor`), and detection rules. Single-card processor reused; only crop coords differ. Fall back to "Generic ID" with a manual-crop prompt for unknown types.
 
-## 3. Workspace (2-column, tighter)
-```text
-┌─────────────────────────────────────────────────────────┐
-│  Header: logo · file chip · actions · theme            │
-├──────────────────────────────┬──────────────────────────┤
-│                              │  Quick Actions (always)  │
-│   PREVIEW (sticky canvas)    │  ──────────────────────  │
-│   • A4 print preview         │  □ Border  ○ Rounded     │
-│   • Front/Back thumbnails    │  Card size  [- 90.6 -]   │
-│     in a slim strip below    │  Gap [4mm]  Margin [8mm] │
-│                              │                          │
-│   Floating bottom toolbar:   │  [ Advanced settings ▸ ] │
-│   [Manual crop] [Reset]      │  (opens right Drawer)    │
-└──────────────────────────────┴──────────────────────────┘
-```
-- Reduce paddings (`p-5` → `p-3`), section header sizes, and gaps for density.
-- Front/Back thumbnails become a **slim horizontal strip** under the A4 preview (not a 2-col block) — saves vertical space.
-- Preview column becomes `sticky top-[56px]` so options scroll independently.
+### 2. Multi-card A4 sheet ("Save paper" mode) on the main page
+Today the main page prints one card centered on A4. CSC operators want to **stack 2-6 cards on one A4** (e.g. family Aadhaars, husband+wife PAN+Aadhaar combo). Add a **Sheet Composer** drawer:
+- "+ Add current card to sheet" button in the Export menu
+- Tray strip showing queued cards (thumbnail + remove + drag-reorder)
+- "Print Sheet" generates a grid PDF (reuse `generateBatchPdf` from batch-processor)
+- Sheet persists in `sessionStorage` so re-uploading another PDF doesn't lose the queue
+- Empty when the operator clicks "Reset session"
 
-## 4. Floating Quick-Actions Panel (right column, always visible)
-Replace the current Collapsible accordion with a single compact card showing the **most-used controls inline**:
-- Border toggle
-- Rounded corners toggle
-- Card size (numeric inputs, side by side)
-- Gap (mm) input
-- Top margin (mm) input
-- Auto-center switch
+### 3. OCR-based smart filename
+After processing, run a lightweight OCR pass (Tesseract.js WASM, loaded on demand) on the cropped front image to extract:
+- Aadhaar last-4 digits
+- PAN number (regex `[A-Z]{5}[0-9]{4}[A-Z]`)
+- Name (top text line)
 
-Everything else moves into the **Advanced Drawer**.
+Use those to auto-name downloads, e.g. `Aadhaar-RAHUL-1234-20260612.pdf`. Falls back to current timestamped name if OCR confidence is low. Toggle in Advanced Drawer ("Smart filenames — uses on-device OCR"). Bundle size impact: Tesseract loaded only when toggle is on.
 
-## 5. Advanced Settings Drawer
-- Use shadcn `Sheet` (right-side) triggered by **"Advanced settings"** button.
-- Contains:
-  - Image filters (brightness, contrast, saturation, sharpness)
-  - Full Print Layout controls (left margin, fine positioning)
-  - Manual crop entry point
-  - Reset all
-- Keeps the main view clean while preserving every existing option.
+### 4. Customer session log (local only)
+A persistent local log of processed documents per session — useful when an operator handles 30 customers a day and needs to re-print one:
+- New route `/log` (or drawer panel) showing: timestamp · doc type · last-4 / PAN suffix · "Reprint" button
+- Stored in `localStorage` (no PII beyond what operator typed; mostly hashes + thumbnails as data URLs)
+- "Clear log" button + auto-clear after 24h
+- Strictly browser-only; no upload (keeps existing privacy promise)
 
-## 6. Floating Action Bar (bottom of preview)
-Small pill-shaped floating bar over the preview with:
-- Manual Crop · Reset Crop · Fit/Zoom indicator (read-only label, no zoom UI re-added)
-- Subtle shadow, glass background, only shown in preview state.
+### 5. Operator-friendly print presets
+A preset dropdown in Quick Options:
+- **Standard (1 card centered)** — current default
+- **Save paper (4-up grid)**
+- **Cut-and-laminate (with border + 3mm bleed)**
+- **PVC card printer (single, no margins)**
 
-## 7. Micro-polish
-- Replace heavy `glass-card` everywhere with two tiers: `surface` (flat) for dense panels, `glass-card` only for the hero preview.
-- Tighter typography scale; numeric inputs use `font-mono` for alignment.
-- Consistent 8px spacing grid.
-- Smooth `transition-colors` on theme switch.
-- Keyboard: `Cmd/Ctrl+P` → Print, `Cmd/Ctrl+S` → Download, `Esc` → close drawer.
+Each preset just sets `layout` + `showBorder` + `roundedCorners` + grid mode in one click.
 
----
+### 6. UPI/QR tip block on landing
+A small footer block on the landing page only: "Free forever. If this saved you time, you can tip the maker." with the creator's UPI QR. Optional, low-emphasis, no popups — fits the cybercafe/CSC vibe where operators appreciate clearly-free tools.
+
+## Out of scope (for this iteration)
+- No cloud storage, no accounts, no backend (preserves zero-trust promise)
+- No language/translation work yet
+- No payment / billing logic
+- No changes to the existing Aadhaar crop math
 
 ## Files to touch
-- `src/index.css` — dark tokens, density utilities
-- `src/main.tsx` or new `src/components/ThemeProvider.tsx` — theme context
-- `src/pages/Index.tsx` — header restructure, layout density, sticky preview, floating bar, drawer wiring, shortcuts
-- `src/components/OptionsPanel.tsx` — split into **QuickOptions** (inline) + **AdvancedOptions** (drawer content)
-- New: `src/components/ThemeToggle.tsx`, `src/components/AdvancedDrawer.tsx`, `src/components/FloatingPreviewToolbar.tsx`
-- `tailwind.config.ts` — only if new tokens needed
+- `src/lib/doc-detector.ts` — add 4-5 new doc types + detection rules + hints
+- `src/lib/pdf-processor.ts` — per-doc-type default crops
+- `src/lib/ocr.ts` (new) — Tesseract.js wrapper with on-demand load
+- `src/lib/session-log.ts` (new) — log storage + helpers
+- `src/components/SheetComposer.tsx` (new) — multi-card tray + grid print
+- `src/components/PresetSelector.tsx` (new) — print preset dropdown
+- `src/pages/Index.tsx` — wire OCR filename, sheet composer button, presets, log entry on download
+- `src/pages/Log.tsx` (new) + route in `src/App.tsx`
+- `src/components/StepsGuide.tsx` — mention CSC/eMitra in copy
+- `package.json` — add `tesseract.js` (lazy-loaded chunk)
 
-## Out of scope
-- No changes to PDF processing logic, crop math, or output dimensions.
-- No new dependencies (uses existing shadcn `Sheet`, `Switch`, `Input`).
-- Mobile layout stays single-column stacked; drawer becomes bottom sheet on small screens.
+## Suggested implementation order
+1. **Doc types** (smallest, highest leverage for your audience)
+2. **Print presets** (instant UX win)
+3. **Sheet composer** (paper-saving — biggest CSC ask)
+4. **Session log + reprint**
+5. **OCR smart filenames** (heaviest, do last)
+6. **Landing tip block** (cosmetic, parallel-able)
+
+Want me to start with steps 1-2 first, or scope a different combination?
